@@ -9,7 +9,7 @@
   const STORAGE_ANALYTICS_KEY = '__storeMascotAnalytics__';
   const SESSION_EXIT_KEY = '__storeMascotExitTriggered__';
 
-  // --- Safe Shopify Fetch Interceptor ---
+  // --- Safe Shopify Fetch Interceptor (Intercepts /cart/add, /cart/change, /cart/update, /cart/clear) ---
   function ensureFetchInterceptor() {
     if (window[FETCH_KEY]) return window[FETCH_KEY];
     const subscribers = new Set();
@@ -1288,10 +1288,12 @@
         this.celebrate(`All Rewards Unlocked! You're a VIP! 👑🎉`, { badge: 'Top Tier VIP', showMeter: true });
         this.dispatchEvent(new CustomEvent('mascot:milestone_reached', { detail: { tier: 'VIP', reward } }));
         this._sendTelemetry('milestone', { label: `VIP Unlocked (${reward})`, revenue: this._cartTotalDollars });
+        this._firePixelEvent('MascotMilestoneReached', { tier: 'VIP', reward, value: this._cartTotalDollars, currency: 'USD' });
       } else if (status.currentTierAchieved > 0 && this._cartTotalDollars >= prevTotal) {
         this.celebrate(`${status.lastUnlockedReward} Unlocked! 🎉`, { badge: 'Milestone Reached', showMeter: true });
         this.dispatchEvent(new CustomEvent('mascot:milestone_reached', { detail: { tier: status.currentTierAchieved, reward: status.lastUnlockedReward } }));
         this._sendTelemetry('milestone', { label: `${status.lastUnlockedReward} Unlocked`, revenue: this._cartTotalDollars });
+        this._firePixelEvent('MascotMilestoneReached', { tier: status.currentTierAchieved, reward: status.lastUnlockedReward, value: this._cartTotalDollars, currency: 'USD' });
       } else if (actionType === 'add') {
         this.celebrate(`Add ${this.currencySymbol}${this._formatAmount(status.remainingToNext)} more for ${status.nextReward}!`, {
           badge: 'Added to Cart',
