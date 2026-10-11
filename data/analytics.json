@@ -1,0 +1,34 @@
+{
+  "shop": "demo-store.myshopify.com",
+  "plan": "Pro ($99/mo)",
+  "impressions": 1,
+  "interactions": 2340,
+  "milestonesReached": 618,
+  "exitOffersShown": 342,
+  "exitOffersConverted": 94,
+  "attributedRevenue": 0,
+  "conversionLift": 14.8,
+  "abTest": {
+    "enabled": true,
+    "variantA": {
+      "label": "Mascot Active (Cohort A)",
+      "sessions": 7141,
+      "orders": 271,
+      "rate": 3.79,
+      "aov": 64.21,
+      "revenue": 17400
+    },
+    "variantB": {
+      "label": "Mascot Hidden (Control B)",
+      "sessions": 7140,
+      "orders": 208,
+      "rate": 2.91,
+      "aov": 51.07,
+      "revenue": 10622
+    },
+    "conversionLift": "+30.2%",
+    "revenueLift": "+$6,778.00",
+    "confidence": "99.5% (Statistically Significant)"
+  },
+  "recentEvents": []
+}

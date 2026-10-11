@@ -1,0 +1,15 @@
+api_version = "2025-01"
+
+[[extensions]]
+name = "PulseMascot Checkout Discount Function"
+handle = "mascot-cart-transform"
+type = "function"
+
+  [[extensions.targeting]]
+  target = "purchase.cart-transform.run"
+  input_query = "src/run.graphql"
+  export = "run"
+
+  [extensions.build]
+  command = "node --version"
+  path = "dist/function.wasm"

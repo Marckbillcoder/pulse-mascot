@@ -1,0 +1,17 @@
+{
+  "persona": "orb",
+  "enableSound": true,
+  "tier1Threshold": 50,
+  "tier1Reward": "Free Shipping",
+  "tier2Threshold": 80,
+  "tier2Reward": "Mystery Gift 🎁",
+  "tier3Threshold": 120,
+  "tier3Reward": "VIP 15% OFF 👑",
+  "enableExitIntent": true,
+  "exitDiscountCode": "SAVE10",
+  "exitDiscountPercent": "10%",
+  "position": "bottom-right",
+  "offsetX": 24,
+  "offsetY": 24,
+  "showBranding": true
+}

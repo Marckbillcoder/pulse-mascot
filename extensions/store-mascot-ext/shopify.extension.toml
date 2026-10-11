@@ -1,0 +1,6 @@
+api_version = "2025-01"
+
+[[extensions]]
+name = "Store Mascot Companion"
+handle = "store-mascot-ext"
+type = "theme"

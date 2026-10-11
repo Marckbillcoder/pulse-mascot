@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Privacy Policy | PulseMascot</title>
+  <link rel="stylesheet" href="https://unpkg.com/@shopify/polaris@13.0.0/build/esm/styles.css" />
+  <style>
+    :root {
+      --p-surface: #ffffff;
+      --p-bg-subdued: #f6f6f7;
+      --p-border: #e1e3e5;
+      --p-text: #202223;
+      --p-text-subdued: #6d7175;
+      --p-interactive: #008060;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: #f1f2f4;
+      color: var(--p-text);
+      line-height: 1.6;
+      padding: 40px 20px;
+    }
+    .legal-container {
+      max-width: 820px;
+      margin: 0 auto;
+      background: #ffffff;
+      border: 1px solid var(--p-border);
+      border-radius: 14px;
+      padding: 40px 48px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .legal-header {
+      border-bottom: 1px solid var(--p-border);
+      padding-bottom: 24px;
+      margin-bottom: 28px;
+    }
+    .legal-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .brand-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #6366f1, #10b981);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-weight: 800;
+      font-size: 18px;
+    }
+    .brand-name {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--p-text);
+    }
+    h1 {
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--p-text);
+      margin-bottom: 6px;
+    }
+    .effective-date {
+      font-size: 13px;
+      color: var(--p-text-subdued);
+    }
+    h2 {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--p-text);
+      margin-top: 28px;
+      margin-bottom: 12px;
+    }
+    p, li {
+      font-size: 14px;
+      color: #374151;
+      margin-bottom: 14px;
+    }
+    ul {
+      padding-left: 24px;
+      margin-bottom: 16px;
+    }
+    .badge {
+      display: inline-block;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: #ecfdf5;
+      color: #065f46;
+      border: 1px solid #a7f3d0;
+      margin-bottom: 12px;
+    }
+    .callout {
+      background: #f8fafc;
+      border-left: 4px solid var(--p-interactive);
+      padding: 16px 20px;
+      border-radius: 0 8px 8px 0;
+      margin: 20px 0;
+    }
+    .footer-links {
+      margin-top: 40px;
+      padding-top: 20px;
+      border-top: 1px solid var(--p-border);
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+    }
+    a {
+      color: var(--p-interactive);
+      text-decoration: none;
+      font-weight: 600;
+    }
+    a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="legal-container">
+    <div class="legal-header">
+      <div class="legal-brand">
+        <div class="brand-icon">⚡</div>
+        <div class="brand-name">PulseMascot</div>
+      </div>
+      <h1>Privacy Policy</h1>
+      <div class="effective-date">Last Updated: March 2025 | Compliant with Shopify App Store, GDPR &amp; CPRA</div>
+    </div>
+
+    <span class="badge">Zero Personal Data (PII) Architecture</span>
+
+    <div class="callout">
+      <strong>Core Privacy Commitment:</strong> PulseMascot is designed with a strict zero-PII (Personally Identifiable Information) privacy-by-design architecture. We never collect, track, store, or sell shopper names, email addresses, phone numbers, shipping addresses, IP addresses, or payment credentials.
+    </div>
+
+    <h2>1. Information We Collect</h2>
+    <p>PulseMascot collects only the minimal data strictly required to deliver gamified cart milestone rewards and conversion rate optimization (CRO) analytics for Shopify merchants:</p>
+    <ul>
+      <li><strong>Merchant Store Configuration:</strong> Store domain (e.g., <code>store.myshopify.com</code>), selected mascot persona, unlocked tier thresholds, reward labels, and exit intent discount codes.</li>
+      <li><strong>Aggregated Anonymous Storefront Telemetry:</strong> Anonymized numeric counters such as mascot impressions, click interactions, milestone unlock counts, and total cart value progression calculated live in the shopper's browser via Shopify's standard <code>/cart.js</code> client-side API.</li>
+    </ul>
+
+    <h2>2. How Data is Stored, Processed &amp; Protected</h2>
+    <p>All merchant configuration and aggregate conversion metrics are stored in secured, encrypted environments with strict access controls. Telemetry transmissions use TLS/HTTPS encryption. At no point is shopper browsing history linked to an individual identity.</p>
+
+    <h2>3. GDPR, UK-GDPR &amp; CPRA Compliance</h2>
+    <p>We comply fully with European General Data Protection Regulation (GDPR), UK-GDPR, and the California Consumer Privacy Act (CPRA). Because we do not store customer PII, shopper records are inherently protected against unauthorized disclosure.</p>
+    <p>We implement and support all mandatory Shopify Privacy Webhook endpoints:</p>
+    <ul>
+      <li><strong><code>customers/data_request</code>:</strong> Inquiries regarding stored customer data return confirmation that zero customer PII is retained.</li>
+      <li><strong><code>customers/redact</code>:</strong> Immediate confirmation that no customer PII exists within our systems.</li>
+      <li><strong><code>shop/redact</code>:</strong> Automated purge of all store configuration and aggregate metrics within 48 hours of an uninstallation.</li>
+      <li><strong><code>app/uninstalled</code>:</strong> Immediate cessation of all data sync operations and session revocation upon app removal.</li>
+    </ul>
+
+    <h2>4. Data Retention Timelines</h2>
+    <p>Aggregate store analytics are retained solely for the duration of the merchant's active app installation. If a merchant uninstalls PulseMascot, all stored configuration and metrics are automatically and permanently erased after 48 hours following the <code>shop/redact</code> webhook trigger.</p>
+
+    <h2>5. Cookies &amp; Local Storage</h2>
+    <p>PulseMascot utilizes minimal client-side browser storage (<code>sessionStorage</code> or <code>localStorage</code>) strictly to prevent repetitive sound triggers or duplicate exit-intent popups within a single shopping session. These cookies/tokens contain no tracking identifiers and are never shared across websites.</p>
+
+    <h2>6. Contact &amp; Data Protection Officer</h2>
+    <p>If you have questions regarding this Privacy Policy or data privacy rights, please reach out to our Data Protection Officer:</p>
+    <p>
+      <strong>PulseMascot Privacy Team</strong><br />
+      Email: <a href="mailto:privacy@pulsemascot.com">privacy@pulsemascot.com</a><br />
+      Support Desk: <a href="mailto:support@pulsemascot.com">support@pulsemascot.com</a>
+    </p>
+
+    <div class="footer-links">
+      <span>&copy; 2025 PulseMascot. All rights reserved.</span>
+      <div>
+        <a href="/terms-of-service">Terms of Service</a> &bull;
+        <a href="/admin">Merchant Dashboard</a>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

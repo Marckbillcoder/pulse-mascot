@@ -1,0 +1,29 @@
+# ==========================================
+# Render.com Blueprint for PulseMascot
+# 1-Click Production Cloud Deployment with Persistent Disk
+# ==========================================
+
+services:
+  - type: web
+    name: pulse-mascot-app
+    runtime: node
+    plan: starter
+    region: oregon
+    buildCommand: npm install
+    startCommand: node server.js
+    disk:
+      name: mascot-data
+      mountPath: /app/data
+      sizeGB: 1
+    healthCheckPath: /api/metrics
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+      - key: SHOPIFY_API_KEY
+        sync: false
+      - key: SHOPIFY_API_SECRET
+        sync: false
+      - key: SCOPES
+        value: ""

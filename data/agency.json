@@ -1,0 +1,90 @@
+{
+  "agencyName": "Apex Commerce Partners",
+  "agencyTier": "Shopify Plus Partner ($499/mo)",
+  "whiteLabelEnabled": true,
+  "customBranding": {
+    "badgeText": "Powered by Apex CRO Engine",
+    "primaryColor": "#008060",
+    "hidePulseBranding": true
+  },
+  "portfolioSummary": {
+    "totalManagedStores": 5,
+    "totalMonthlyGmvInfluenced": 184520.00,
+    "netRevenueLift": 48290.00,
+    "averageAovLift": "+26.8%",
+    "totalCartsRecovered": 599,
+    "monthlyRevShareEarned": 498.00
+  },
+  "stores": [
+    {
+      "id": "store-1",
+      "name": "Soles & Streetwear",
+      "domain": "soles-sneakers.myshopify.com",
+      "niche": "Streetwear & Footwear",
+      "persona": "ghost",
+      "plan": "Pro Plus ($199/mo)",
+      "monthlyTraffic": 42000,
+      "aov": 142.50,
+      "aovLift": "+28.4%",
+      "monthlyAttributedRev": 18450.00,
+      "recoveredCarts": 142,
+      "status": "Active"
+    },
+    {
+      "id": "store-2",
+      "name": "Purr & Bark Supply",
+      "domain": "purr-pets.myshopify.com",
+      "niche": "Pet Supplies & Care",
+      "persona": "pet",
+      "plan": "Pro Plus ($199/mo)",
+      "monthlyTraffic": 31000,
+      "aov": 68.20,
+      "aovLift": "+34.1%",
+      "monthlyAttributedRev": 12890.00,
+      "recoveredCarts": 88,
+      "status": "Active"
+    },
+    {
+      "id": "store-3",
+      "name": "Glow Ritual Skincare",
+      "domain": "glow-skincare.myshopify.com",
+      "niche": "Luxury Clean Beauty",
+      "persona": "orb",
+      "plan": "Growth ($79/mo)",
+      "monthlyTraffic": 18500,
+      "aov": 94.00,
+      "aovLift": "+22.0%",
+      "monthlyAttributedRev": 7450.00,
+      "recoveredCarts": 115,
+      "status": "Active"
+    },
+    {
+      "id": "store-4",
+      "name": "Matcha Tea & Botanicals",
+      "domain": "matcha-boba-bar.myshopify.com",
+      "niche": "Food & Beverage",
+      "persona": "boba",
+      "plan": "Growth ($79/mo)",
+      "monthlyTraffic": 14200,
+      "aov": 38.40,
+      "aovLift": "+39.2%",
+      "monthlyAttributedRev": 4320.00,
+      "recoveredCarts": 94,
+      "status": "Active"
+    },
+    {
+      "id": "store-5",
+      "name": "Anime Quest Collectibles",
+      "domain": "anime-quest.myshopify.com",
+      "niche": "Gaming & Collectibles",
+      "persona": "dragon",
+      "plan": "Pro Plus ($199/mo)",
+      "monthlyTraffic": 26800,
+      "aov": 115.00,
+      "aovLift": "+31.8%",
+      "monthlyAttributedRev": 11180.00,
+      "recoveredCarts": 160,
+      "status": "Active"
+    }
+  ]
+}

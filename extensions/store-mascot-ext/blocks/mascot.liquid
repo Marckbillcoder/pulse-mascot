@@ -1,0 +1,240 @@
+{% comment %}
+  Shopify Theme App Extension — Store Mascot App Embed Block
+  Target: body
+  High-Converting Gamified AOV & Cart Conversion Engine
+{% endcomment %}
+
+<store-mascot
+  id="store-mascot-{{ block.id }}"
+  data-shopify-block-id="{{ block.id }}"
+  persona="{{ block.settings.persona | default: 'orb' }}"
+  enable-sound="{{ block.settings.enable_sound }}"
+  free-shipping-threshold="{{ block.settings.tier1_threshold | default: 50 }}"
+  tier1-threshold="{{ block.settings.tier1_threshold | default: 50 }}"
+  tier1-reward="{{ block.settings.tier1_reward | default: 'Free Shipping' | escape }}"
+  tier2-threshold="{{ block.settings.tier2_threshold | default: 80 }}"
+  tier2-reward="{{ block.settings.tier2_reward | default: 'Mystery Gift 🎁' | escape }}"
+  tier3-threshold="{{ block.settings.tier3_threshold | default: 120 }}"
+  tier3-reward="{{ block.settings.tier3_reward | default: 'VIP 15% OFF 👑' | escape }}"
+  enable-exit-intent="{{ block.settings.enable_exit_intent }}"
+  exit-discount-code="{{ block.settings.exit_discount_code | default: 'SAVE10' | escape }}"
+  exit-discount-percent="{{ block.settings.exit_discount_percent | default: '10%' | escape }}"
+  exit-discount-text="{{ block.settings.exit_discount_text | default: "Wait! Don't leave empty-handed 🥺 Take 10% OFF!" | escape }}"
+  currency-symbol="{{ cart.currency.symbol }}"
+  show-branding="{{ block.settings.show_branding }}"
+  app-name="{{ block.settings.app_name | escape }}"
+  brand-url="{{ block.settings.brand_url | default: 'https://shopify.com' }}"
+  position="{{ block.settings.position | default: 'bottom-right' }}"
+  offset-x="{{ block.settings.offset_x | default: 24 }}"
+  offset-y="{{ block.settings.offset_y | default: 24 }}"
+  enable-ab-test="{{ block.settings.enable_ab_testing }}"
+  ab-split="{{ block.settings.ab_split_ratio | default: 50 }}"
+  data-initial-cart-total="{{ cart.total_price | divided_by: 100.0 }}"
+  data-initial-item-count="{{ cart.item_count }}"
+  {{ block.shopify_attributes }}
+></store-mascot>
+
+<script src="{{ 'mascot-widget.js' | asset_url }}" defer="defer"></script>
+
+{% schema %}
+{
+  "name": "Store Mascot Companion",
+  "target": "body",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Character & Audio Persona"
+    },
+    {
+      "type": "select",
+      "id": "persona",
+      "label": "Mascot Character Persona",
+      "default": "orb",
+      "options": [
+        {
+          "value": "orb",
+          "label": "Orb (Futuristic Sci-Fi Companion)"
+        },
+        {
+          "value": "pet",
+          "label": "Pet (Cute Kitten / Puppy)"
+        },
+        {
+          "value": "boba",
+          "label": "Boba (Bubbly Cup Companion)"
+        },
+        {
+          "value": "ghost",
+          "label": "Ghost (Spooky Cute / Streetwear Companion)"
+        },
+        {
+          "value": "dragon",
+          "label": "Dragon (Mythic Baby Dragon / Anime & Gaming)"
+        }
+      ]
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_sound",
+      "label": "Enable Delightful Audio Micro-Chimes",
+      "info": "Plays subtle synthesizer chimes on milestones without external sound files.",
+      "default": true
+    },
+    {
+      "type": "header",
+      "content": "Gamified Multi-Tier Milestones (AOV Engine)"
+    },
+    {
+      "type": "number",
+      "id": "tier1_threshold",
+      "label": "Tier 1 Threshold (Free Shipping)",
+      "default": 50
+    },
+    {
+      "type": "text",
+      "id": "tier1_reward",
+      "label": "Tier 1 Reward Name",
+      "default": "Free Shipping"
+    },
+    {
+      "type": "number",
+      "id": "tier2_threshold",
+      "label": "Tier 2 Threshold (e.g. Free Gift)",
+      "info": "Set to 0 to disable Tier 2.",
+      "default": 80
+    },
+    {
+      "type": "text",
+      "id": "tier2_reward",
+      "label": "Tier 2 Reward Name",
+      "default": "Mystery Gift 🎁"
+    },
+    {
+      "type": "number",
+      "id": "tier3_threshold",
+      "label": "Tier 3 Threshold (e.g. VIP Perk)",
+      "info": "Set to 0 to disable Tier 3.",
+      "default": 120
+    },
+    {
+      "type": "text",
+      "id": "tier3_reward",
+      "label": "Tier 3 Reward Name",
+      "default": "VIP 15% OFF 👑"
+    },
+    {
+      "type": "header",
+      "content": "Exit-Intent Cart Abandonment Saver"
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_exit_intent",
+      "label": "Enable Exit-Intent Discount Nudge",
+      "info": "Intercepts shoppers attempting to leave with items in their cart.",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "exit_discount_code",
+      "label": "Shopify Discount Code",
+      "default": "SAVE10"
+    },
+    {
+      "type": "text",
+      "id": "exit_discount_percent",
+      "label": "Discount Amount Display",
+      "default": "10%"
+    },
+    {
+      "type": "text",
+      "id": "exit_discount_text",
+      "label": "Exit Nudge Headline",
+      "default": "Wait! Don't leave empty-handed 🥺 Take 10% OFF!"
+    },
+    {
+      "type": "header",
+      "content": "Placement & Layout"
+    },
+    {
+      "type": "select",
+      "id": "position",
+      "label": "Corner Position",
+      "default": "bottom-right",
+      "options": [
+        {
+          "value": "bottom-right",
+          "label": "Bottom Right"
+        },
+        {
+          "value": "bottom-left",
+          "label": "Bottom Left"
+        }
+      ]
+    },
+    {
+      "type": "range",
+      "id": "offset_x",
+      "label": "Horizontal Offset (X)",
+      "min": 10,
+      "max": 100,
+      "step": 2,
+      "unit": "px",
+      "default": 24
+    },
+    {
+      "type": "range",
+      "id": "offset_y",
+      "label": "Vertical Offset (Y)",
+      "min": 10,
+      "max": 100,
+      "step": 2,
+      "unit": "px",
+      "default": 24
+    },
+    {
+      "type": "header",
+      "content": "Branding & Attribution"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_branding",
+      "label": "Show 'Powered by' badge",
+      "info": "Viral growth badge. Can be disabled on paid plans.",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "app_name",
+      "label": "App / Brand Name",
+      "default": "PulseMascot"
+    },
+    {
+      "type": "url",
+      "id": "brand_url",
+      "label": "Brand Target URL",
+      "default": "https://shopify.com"
+    },
+    {
+      "type": "header",
+      "content": "A/B Conversion Rate Split Testing"
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_ab_testing",
+      "label": "Enable A/B Conversion Split Testing",
+      "info": "Randomly assigns visitors to Variant A (Mascot) or Variant B (Hidden Control) to measure conversion rate lift.",
+      "default": false
+    },
+    {
+      "type": "range",
+      "id": "ab_split_ratio",
+      "label": "Traffic seeing Mascot (%)",
+      "min": 10,
+      "max": 90,
+      "step": 5,
+      "unit": "%",
+      "default": 50
+    }
+  ]
+}
+{% endschema %}

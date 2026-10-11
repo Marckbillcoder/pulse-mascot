@@ -1,0 +1,1108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>&lt;store-mascot&gt; — High-Converting AOV Engine Test Harness</title>
+  <style>
+    :root {
+      --bg: #090d16;
+      --bg-card: rgba(30, 41, 59, 0.55);
+      --border: rgba(255, 255, 255, 0.09);
+      --border-highlight: rgba(99, 102, 241, 0.45);
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg);
+      background-image:
+        radial-gradient(circle at 15% 10%, rgba(99, 102, 241, 0.14), transparent 35%),
+        radial-gradient(circle at 85% 25%, rgba(16, 185, 129, 0.1), transparent 35%),
+        radial-gradient(circle at 50% 80%, rgba(139, 92, 246, 0.1), transparent 40%);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 240vh;
+      padding-bottom: 160px;
+    }
+
+    .top-bar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(9, 13, 22, 0.88);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 24px;
+    }
+
+    .top-bar-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .brand-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 800;
+      font-size: 18px;
+      letter-spacing: -0.02em;
+    }
+
+    .brand-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #818cf8, #34d399);
+      box-shadow: 0 0 12px rgba(129, 140, 248, 0.7);
+    }
+
+    .header-status {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 13px;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 12px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border);
+      font-weight: 600;
+    }
+    .status-pill strong { color: #a5b4fc; }
+
+    .btn-roi {
+      background: linear-gradient(135deg, #4f46e5, #7c3aed);
+      color: #fff;
+      border: none;
+      border-radius: 999px;
+      padding: 6px 14px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 4px 14px rgba(79, 70, 229, 0.35);
+      transition: transform .18s, filter .18s;
+    }
+    .btn-roi:hover { transform: translateY(-1px); filter: brightness(1.12); }
+
+    .container { max-width: 1200px; margin: 0 auto; padding: 36px 24px; }
+
+    .hero {
+      text-align: left;
+      padding: 24px 0 32px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 32px;
+      display: grid;
+      grid-template-columns: 1.35fr 1fr;
+      gap: 28px;
+      align-items: center;
+    }
+    @media (max-width: 880px) { .hero { grid-template-columns: 1fr; } }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #818cf8;
+      background: rgba(99, 102, 241, 0.12);
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      padding: 5px 12px;
+      border-radius: 999px;
+      margin-bottom: 12px;
+    }
+
+    .hero h1 {
+      font-size: clamp(28px, 4vw, 42px);
+      font-weight: 800;
+      line-height: 1.15;
+      letter-spacing: -0.03em;
+      margin-bottom: 12px;
+    }
+    .hero p { color: var(--text-muted); font-size: 15.5px; max-width: 620px; }
+
+    .quick-harness-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-highlight);
+      border-radius: 20px;
+      padding: 22px;
+      box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5);
+    }
+    .quick-harness-card h2 {
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #cbd5e1;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .btn-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+
+    .btn {
+      appearance: none;
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      font-weight: 600;
+      font-size: 13px;
+      padding: 10px 14px;
+      border-radius: 10px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: background .18s, border-color .18s, transform .15s, color .18s;
+      outline: none;
+      text-decoration: none;
+    }
+    .btn:hover {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: rgba(255, 255, 255, 0.22);
+      transform: translateY(-1px);
+    }
+    .btn:active { transform: translateY(0); }
+
+    .btn-add { background: rgba(99, 102, 241, 0.2); border-color: rgba(99, 102, 241, 0.45); color: #c7d2fe; }
+    .btn-add:hover { background: rgba(99, 102, 241, 0.35); border-color: rgba(99, 102, 241, 0.7); color: #fff; }
+
+    .btn-remove { background: rgba(239, 68, 68, 0.16); border-color: rgba(239, 68, 68, 0.4); color: #fca5a5; }
+    .btn-remove:hover { background: rgba(239, 68, 68, 0.28); border-color: rgba(239, 68, 68, 0.6); color: #fff; }
+
+    .btn-checkout {
+      grid-column: span 2;
+      background: linear-gradient(135deg, #10b981, #059669);
+      border-color: transparent;
+      color: #fff;
+      font-weight: 700;
+    }
+    .btn-checkout:hover {
+      background: linear-gradient(135deg, #34d399, #10b981);
+      box-shadow: 0 6px 20px rgba(16, 185, 129, 0.38);
+    }
+
+    .btn-exit {
+      background: rgba(245, 158, 11, 0.2);
+      border-color: rgba(245, 158, 11, 0.45);
+      color: #fde68a;
+    }
+    .btn-exit:hover {
+      background: rgba(245, 158, 11, 0.35);
+      border-color: rgba(245, 158, 11, 0.7);
+      color: #fff;
+    }
+
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: 1.25fr 1fr;
+      gap: 28px;
+      align-items: start;
+    }
+    @media (max-width: 960px) { .dashboard-grid { grid-template-columns: 1fr; } }
+
+    .panel {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 24px;
+      box-shadow: 0 16px 36px -10px rgba(0, 0, 0, 0.4);
+    }
+    .panel-title {
+      font-size: 17px;
+      font-weight: 700;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .panel-subtitle { color: var(--text-muted); font-size: 13px; margin-bottom: 18px; }
+
+    .products-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .product-card {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 12px;
+      transition: border-color .2s, transform .2s;
+    }
+    .product-card:hover {
+      border-color: rgba(99, 102, 241, 0.4);
+      transform: translateY(-2px);
+    }
+    .product-visual {
+      height: 90px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.04);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 38px;
+    }
+    .product-meta { display: flex; align-items: baseline; justify-content: space-between; }
+    .product-name { font-weight: 700; font-size: 14.5px; }
+    .product-price { font-weight: 800; color: #a5b4fc; font-size: 14.5px; }
+    .product-desc { color: var(--text-muted); font-size: 12px; margin-top: 4px; }
+
+    .cart-summary-box {
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 18px;
+      margin-top: 18px;
+    }
+    .cart-summary-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+    .cart-summary-row strong { font-size: 17px; color: #34d399; }
+    .cart-progress-track {
+      height: 8px;
+      width: 100%;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 999px;
+      overflow: hidden;
+      margin-top: 12px;
+    }
+    .cart-progress-fill {
+      height: 100%;
+      width: 30%;
+      background: linear-gradient(90deg, #6366f1, #34d399);
+      border-radius: 999px;
+      transition: width .4s ease;
+    }
+    .shipping-status-hint {
+      margin-top: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-align: right;
+    }
+
+    .control-group { margin-bottom: 22px; }
+    .control-label {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: #94a3b8;
+      display: block;
+      margin-bottom: 8px;
+    }
+
+    .state-buttons {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+    }
+    .state-btn { padding: 8px 6px; font-size: 12px; font-weight: 700; }
+    .state-btn.active {
+      background: #4f46e5;
+      border-color: #818cf8;
+      color: #fff;
+      box-shadow: 0 0 12px rgba(99, 102, 241, 0.4);
+    }
+
+    .settings-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 10px;
+      font-size: 13px;
+    }
+    .settings-row input[type="text"],
+    .settings-row input[type="number"],
+    .settings-row select {
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 6px 10px;
+      border-radius: 8px;
+      width: 160px;
+      font-size: 13px;
+    }
+    .settings-row input[type="range"] {
+      width: 160px;
+      accent-color: #6366f1;
+    }
+
+    .event-log {
+      background: #06090f;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      height: 140px;
+      overflow-y: auto;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 11.5px;
+      color: #94a3b8;
+    }
+    .log-entry { padding: 3px 0; border-bottom: 1px dashed rgba(255, 255, 255, 0.05); }
+    .log-entry span.tag { color: #818cf8; font-weight: 700; }
+
+    /* Modal Styling */
+    .roi-modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(8px);
+      z-index: 2147483600;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .roi-modal-backdrop.open { display: flex; }
+
+    .roi-modal-card {
+      background: #0f172a;
+      border: 1px solid rgba(99, 102, 241, 0.4);
+      border-radius: 20px;
+      max-width: 600px;
+      width: 100%;
+      padding: 28px;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.7);
+      position: relative;
+    }
+    .roi-modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .roi-modal-title { font-size: 20px; font-weight: 800; color: #fff; }
+    .roi-modal-close {
+      background: none;
+      border: none;
+      color: #94a3b8;
+      font-size: 24px;
+      cursor: pointer;
+    }
+    .roi-modal-close:hover { color: #fff; }
+
+    .roi-stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+      margin-bottom: 22px;
+    }
+    .roi-stat-box {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 14px;
+    }
+    .roi-stat-num { font-size: 24px; font-weight: 800; color: #a5b4fc; }
+    .roi-stat-num.highlight { color: #34d399; }
+    .roi-stat-label { font-size: 11.5px; font-weight: 600; color: #94a3b8; text-transform: uppercase; margin-top: 4px; }
+
+    .scroll-playground { margin-top: 40px; display: flex; flex-direction: column; gap: 32px; }
+    .scroll-milestone {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      flex-wrap: wrap;
+    }
+    .scroll-milestone h3 { font-size: 19px; margin-bottom: 6px; }
+    .scroll-milestone p { color: var(--text-muted); font-size: 14px; max-width: 600px; }
+  </style>
+</head>
+<body>
+
+  <header class="top-bar">
+    <div class="top-bar-inner">
+      <div class="brand-logo">
+        <span class="brand-dot"></span>
+        <span>LUMEN // High-Converting Mascot Engine Sandbox</span>
+      </div>
+      <div class="header-status">
+        <div class="status-pill">State: <strong id="header-state">IDLE</strong></div>
+        <div class="status-pill">Cart: <strong id="header-cart">$15.00</strong></div>
+        <div class="status-pill">Persona: <strong id="header-persona">ORB</strong></div>
+        <button type="button" class="btn-roi" id="open-roi-modal">
+          📊 ROI Dashboard
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="hero">
+      <div>
+        <div class="eyebrow">Shopify App Embed • Gamified AOV &amp; Conversion Engine</div>
+        <h1>Interactive Mascot &amp; Multi-Tier Reward System</h1>
+        <p>
+          Equipped with 3 swappable Vector Personas (Orb, Pet, Boba), Multi-Tier Milestones, zero-asset Web Audio chimes, and an Exit-Intent Cart Abandonment Saver.
+        </p>
+      </div>
+
+      <div class="quick-harness-card">
+        <h2>
+          <span>Multi-Tier Cart Simulators</span>
+          <span style="font-size: 11px; color: #818cf8;">Live /cart/*.js interceptor</span>
+        </h2>
+        <div class="btn-grid">
+          <button type="button" class="btn btn-add" id="quick-add-tier1">
+            <span>🎯 Reach Tier 1 ($50)</span>
+          </button>
+          <button type="button" class="btn btn-add" id="quick-add-tier2">
+            <span>🎁 Reach Tier 2 ($80)</span>
+          </button>
+          <button type="button" class="btn btn-add" id="quick-add-tier3">
+            <span>👑 Reach Tier 3 ($120)</span>
+          </button>
+          <button type="button" class="btn btn-remove" id="quick-remove-btn">
+            <span>－ Remove Item</span>
+          </button>
+          <button type="button" class="btn btn-exit" id="sim-exit-intent">
+            <span>🚨 Test Exit-Intent Offer</span>
+          </button>
+          <button type="button" class="btn" id="quick-clear-btn">
+            <span>🗑 Clear Cart</span>
+          </button>
+          <button
+            type="button"
+            name="checkout"
+            class="btn btn-checkout checkout-btn"
+            data-mascot-checkout
+            id="quick-checkout-btn"
+          >
+            <span>Proceed to Checkout (Hover/Click to Nudge) →</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <div class="dashboard-grid">
+      <!-- Left Column: Products & Cart -->
+      <div class="panel">
+        <div class="panel-title">
+          <span>Curated Storefront Products</span>
+          <span style="font-size: 12px; color: var(--text-muted);">Cents-normalized (/ 100)</span>
+        </div>
+        <p class="panel-subtitle">
+          Adds items via native <code>window.fetch('/cart/add.js')</code> to trigger real Shopify cart mutations.
+        </p>
+
+        <div class="products-grid">
+          <article class="product-card">
+            <div>
+              <div class="product-visual">🌿</div>
+              <div class="product-meta" style="margin-top: 12px;">
+                <span class="product-name">Botanical Mist</span>
+                <span class="product-price">$15</span>
+              </div>
+              <p class="product-desc">Hydrating facial toner with neroli &amp; bergamot.</p>
+            </div>
+            <button type="button" class="btn btn-add product-add-btn" data-price="15" data-title="Botanical Mist">
+              Add to Cart ($15)
+            </button>
+          </article>
+
+          <article class="product-card">
+            <div>
+              <div class="product-visual">🕯️</div>
+              <div class="product-meta" style="margin-top: 12px;">
+                <span class="product-name">Hinoki Soy Candle</span>
+                <span class="product-price">$25</span>
+              </div>
+              <p class="product-desc">Hand-poured Japanese cypress &amp; cedarwood candle.</p>
+            </div>
+            <button type="button" class="btn btn-add product-add-btn" data-price="25" data-title="Hinoki Soy Candle">
+              Add to Cart ($25)
+            </button>
+          </article>
+
+          <article class="product-card">
+            <div>
+              <div class="product-visual">🍵</div>
+              <div class="product-meta" style="margin-top: 12px;">
+                <span class="product-name">Ceremonial Matcha</span>
+                <span class="product-price">$35</span>
+              </div>
+              <p class="product-desc">First-harvest Uji matcha tin with bamboo whisk.</p>
+            </div>
+            <button type="button" class="btn btn-add product-add-btn" data-price="35" data-title="Ceremonial Matcha">
+              Add to Cart ($35)
+            </button>
+          </article>
+
+          <article class="product-card">
+            <div>
+              <div class="product-visual">✨</div>
+              <div class="product-meta" style="margin-top: 12px;">
+                <span class="product-name">Silk Sleep Mask</span>
+                <span class="product-price">$45</span>
+              </div>
+              <p class="product-desc">Pure mulberry silk eye cover with velvet pouch.</p>
+            </div>
+            <button type="button" class="btn btn-add product-add-btn" data-price="45" data-title="Silk Sleep Mask">
+              Add to Cart ($45)
+            </button>
+          </article>
+        </div>
+
+        <div class="cart-summary-box">
+          <div class="cart-summary-row">
+            <span>Storefront Cart Subtotal:</span>
+            <strong id="cart-subtotal-display">$15.00</strong>
+          </div>
+          <div class="cart-summary-row" style="color: var(--text-muted); font-size: 13px;">
+            <span>Items in Cart:</span>
+            <span id="cart-count-label">1</span>
+          </div>
+          <div class="cart-progress-track">
+            <div class="cart-progress-fill" id="harness-progress-bar"></div>
+          </div>
+          <div class="shipping-status-hint" id="harness-shipping-hint">
+            Add $35.00 more for Free Shipping!
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column: Settings & Live Customizer -->
+      <div class="panel">
+        <div class="panel-title">
+          <span>Theme App Extension Customizer</span>
+          <span style="font-size: 12px; color: var(--text-muted);">blocks/mascot.liquid</span>
+        </div>
+        <p class="panel-subtitle">
+          Live simulated Shopify Theme Editor inputs and interactive emotional triggers.
+        </p>
+
+        <div class="control-group">
+          <span class="control-label">1. Mascot Character Persona</span>
+          <div class="settings-row">
+            <label for="select-persona"><code>persona</code></label>
+            <select id="select-persona">
+              <option value="orb" selected>Orb (Sci-Fi Companion)</option>
+              <option value="pet">Pet (Cute Kitten / Puppy)</option>
+              <option value="boba">Boba (Bubbly Cup)</option>
+              <option value="ghost">Ghost 👻 (Spooky Streetwear)</option>
+              <option value="dragon">Dragon 🐉 (Mythic Beast)</option>
+            </select>
+          </div>
+          <div class="settings-row">
+            <label for="toggle-sound"><code>enable-sound</code> (Audio Chimes)</label>
+            <input type="checkbox" id="toggle-sound" checked style="width: 18px; height: 18px; cursor: pointer;" />
+          </div>
+        </div>
+
+        <div class="control-group">
+          <span class="control-label">2. Direct Emotional State Triggers</span>
+          <div class="state-buttons">
+            <button type="button" class="btn state-btn" data-trigger-state="IDLE">IDLE</button>
+            <button type="button" class="btn state-btn" data-trigger-state="CELEBRATE">CELEBRATE</button>
+            <button type="button" class="btn state-btn" data-trigger-state="SAD">SAD</button>
+            <button type="button" class="btn state-btn active" data-trigger-state="NUDGE">NUDGE</button>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <span class="control-label">3. Milestone &amp; Exit-Intent Controls</span>
+          <div class="settings-row">
+            <label for="input-tier1"><code>tier1-threshold</code></label>
+            <input type="number" id="input-tier1" value="50" min="10" step="5" />
+          </div>
+          <div class="settings-row">
+            <label for="input-tier2"><code>tier2-threshold</code></label>
+            <input type="number" id="input-tier2" value="80" min="20" step="5" />
+          </div>
+          <div class="settings-row">
+            <label for="input-tier3"><code>tier3-threshold</code></label>
+            <input type="number" id="input-tier3" value="120" min="50" step="5" />
+          </div>
+          <div class="settings-row">
+            <label for="toggle-exit"><code>enable-exit-intent</code></label>
+            <input type="checkbox" id="toggle-exit" checked style="width: 18px; height: 18px; cursor: pointer;" />
+          </div>
+        </div>
+
+        <div class="control-group">
+          <span class="control-label">4. Layout &amp; Branding</span>
+          <div class="settings-row">
+            <label for="select-position"><code>position</code></label>
+            <select id="select-position">
+              <option value="bottom-right" selected>bottom-right</option>
+              <option value="bottom-left">bottom-left</option>
+            </select>
+          </div>
+          <div class="settings-row">
+            <label for="range-offset-x"><code>offset-x</code> (<span id="val-offset-x">24</span>px)</label>
+            <input type="range" id="range-offset-x" min="10" max="100" step="2" value="24" />
+          </div>
+          <div class="settings-row">
+            <label for="range-offset-y"><code>offset-y</code> (<span id="val-offset-y">24</span>px)</label>
+            <input type="range" id="range-offset-y" min="10" max="100" step="2" value="24" />
+          </div>
+          <div class="settings-row">
+            <label for="toggle-branding"><code>show-branding</code></label>
+            <input type="checkbox" id="toggle-branding" checked style="width: 18px; height: 18px; cursor: pointer;" />
+          </div>
+        </div>
+
+        <div class="control-group">
+          <span class="control-label">5. Real-Time Telemetry Log</span>
+          <div class="event-log" id="event-log"></div>
+        </div>
+      </div>
+    </div>
+
+    <section class="scroll-playground">
+      <div class="scroll-milestone">
+        <div>
+          <div class="eyebrow">Scroll Momentum Test</div>
+          <h3>Parallax Tracking &amp; Pupil Inertia</h3>
+          <p>
+            Scroll up and down to observe the mascot's pupils tracking both mouse cursor and scroll speed simultaneously.
+          </p>
+        </div>
+        <button type="button" class="btn btn-add product-add-btn" data-price="20" data-title="Travel Mist ($20)">
+          ＋ Quick Add ($20)
+        </button>
+      </div>
+
+      <div class="scroll-milestone">
+        <div>
+          <div class="eyebrow">Checkout Interceptor Test</div>
+          <h3>Exit-Intent &amp; Cart Recovery Simulation</h3>
+          <p>
+            Move your cursor rapidly to the top of the browser window with items in your cart to trigger the exit-intent pleading discount offer.
+          </p>
+        </div>
+        <button
+          type="button"
+          name="checkout"
+          class="btn btn-checkout checkout-btn"
+          data-mascot-checkout
+          style="max-width: 320px;"
+        >
+          Checkout Now (Hover to Nudge) →
+        </button>
+      </div>
+    </section>
+  </main>
+
+  <!-- ROI Attribution Modal -->
+  <div class="roi-modal-backdrop" id="roi-modal">
+    <div class="roi-modal-card">
+      <div class="roi-modal-header">
+        <h3 class="roi-modal-title">💰 Mascot Revenue Attribution &amp; ROI</h3>
+        <button type="button" class="roi-modal-close" id="close-roi-modal">&times;</button>
+      </div>
+
+      <div class="roi-stats-grid">
+        <div class="roi-stat-box">
+          <div class="roi-stat-num highlight" id="stat-revenue">$0.00</div>
+          <div class="roi-stat-label">Attributed Revenue</div>
+        </div>
+        <div class="roi-stat-box">
+          <div class="roi-stat-num" id="stat-roi">0x</div>
+          <div class="roi-stat-label">Est. ROI on $49 Plan</div>
+        </div>
+        <div class="roi-stat-box">
+          <div class="roi-stat-num" id="stat-milestones">0</div>
+          <div class="roi-stat-label">Milestones Unlocked</div>
+        </div>
+        <div class="roi-stat-box">
+          <div class="roi-stat-num" id="stat-recovered">0</div>
+          <div class="roi-stat-label">Exit Carts Recovered</div>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 10px; margin-top: 10px;">
+        <button type="button" class="btn btn-add" id="simulate-traffic-btn" style="flex: 1;">
+          ⚡ Simulate 25 Shoppers Traffic
+        </button>
+        <button type="button" class="btn" id="reset-analytics-btn">
+          Reset Analytics
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Instantiate <store-mascot> with full Liquid settings -->
+  <store-mascot
+    id="mascot"
+    data-shopify-block-id="mascot-app-embed-1"
+    persona="orb"
+    enable-sound="true"
+    free-shipping-threshold="50"
+    tier1-threshold="50"
+    tier1-reward="Free Shipping"
+    tier2-threshold="80"
+    tier2-reward="Mystery Gift 🎁"
+    tier3-threshold="120"
+    tier3-reward="VIP 15% OFF 👑"
+    enable-exit-intent="true"
+    exit-discount-code="SAVE10"
+    exit-discount-percent="10%"
+    exit-discount-text="Wait! Don't leave empty-handed 🥺 Take 10% OFF!"
+    currency-symbol="$"
+    show-branding="true"
+    app-name="PulseMascot"
+    brand-url="https://apps.shopify.com"
+    position="bottom-right"
+    offset-x="24"
+    offset-y="24"
+    data-initial-cart-total="15.0"
+    data-initial-item-count="1"
+  ></store-mascot>
+
+  <script src="extensions/store-mascot-ext/assets/mascot-widget.js" defer="defer"></script>
+
+  <script>
+    window.addEventListener('DOMContentLoaded', () => {
+      const mascot = document.getElementById('mascot');
+      const logEl = document.getElementById('event-log');
+      const headerStateEl = document.getElementById('header-state');
+      const headerCartEl = document.getElementById('header-cart');
+      const headerPersonaEl = document.getElementById('header-persona');
+      const subtotalDisplay = document.getElementById('cart-subtotal-display');
+      const countLabel = document.getElementById('cart-count-label');
+      const progressBar = document.getElementById('harness-progress-bar');
+      const shippingHint = document.getElementById('harness-shipping-hint');
+      const stateButtons = document.querySelectorAll('[data-trigger-state]');
+
+      // Mock Cart Object
+      const mockCart = {
+        items: [
+          {
+            id: 1001,
+            title: 'Botanical Mist',
+            quantity: 1,
+            price: 1500,
+            final_line_price: 1500,
+          },
+        ],
+        get total_price() {
+          return this.items.reduce((sum, item) => sum + item.final_line_price, 0);
+        },
+        get item_count() {
+          return this.items.reduce((sum, item) => sum + item.quantity, 0);
+        },
+        toJSON() {
+          return {
+            token: 'mock_shopify_cart_token_2026',
+            item_count: this.item_count,
+            total_price: this.total_price,
+            items_subtotal_price: this.total_price,
+            currency: 'USD',
+            items: this.items.slice(),
+          };
+        },
+      };
+
+      function escapeHtml(str) {
+        return String(str)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;');
+      }
+
+      function appendLog(tag, text) {
+        const entry = document.createElement('div');
+        entry.className = 'log-entry';
+        const time = new Date().toLocaleTimeString([], { hour12: false });
+        entry.innerHTML = `<span style="color:#64748b">[${time}]</span> <span class="tag">${escapeHtml(tag)}</span> ${escapeHtml(text)}`;
+        logEl.prepend(entry);
+      }
+
+      function syncHarnessUI() {
+        const sym = mascot.currencySymbol || '$';
+        const totalDollars = mockCart.total_price / 100;
+        const t1 = mascot.tier1Threshold;
+        const pct = Math.min(100, (totalDollars / t1) * 100);
+
+        headerCartEl.textContent = `${sym}${totalDollars.toFixed(2)}`;
+        headerPersonaEl.textContent = mascot.persona.toUpperCase();
+        subtotalDisplay.textContent = `${sym}${totalDollars.toFixed(2)}`;
+        countLabel.textContent = String(mockCart.item_count);
+        progressBar.style.width = `${pct.toFixed(1)}%`;
+
+        if (totalDollars >= t1) {
+          shippingHint.textContent = 'Free Shipping Unlocked! 🎉';
+          shippingHint.style.color = '#34d399';
+        } else {
+          const rem = t1 - totalDollars;
+          shippingHint.textContent = `Add ${sym}${rem.toFixed(2)} more for Free Shipping!`;
+          shippingHint.style.color = '#94a3b8';
+        }
+      }
+
+      // Mock window.fetch interceptor
+      const nativeFetch = window.fetch.bind(window);
+      window.fetch = async function (input, init = {}) {
+        const url = typeof input === 'string' ? input : (input && input.url) || '';
+
+        if (/\/cart\/(add|change|clear)(\.js)?/i.test(url)) {
+          let body = {};
+          try {
+            body = init.body ? JSON.parse(init.body) : {};
+          } catch (_) {}
+
+          const sym = mascot.currencySymbol || '$';
+
+          if (/\/cart\/add/i.test(url)) {
+            const priceCents = Math.round((Number(body.priceDollars) || 20) * 100);
+            const title = body.title || 'Storefront Item';
+            mockCart.items.push({
+              id: Date.now() + Math.floor(Math.random() * 1000),
+              title,
+              quantity: 1,
+              price: priceCents,
+              final_line_price: priceCents,
+            });
+            appendLog('fetch(/cart/add.js)', `Added "${title}" (${sym}${(priceCents / 100).toFixed(2)}) → Cart: ${sym}${(mockCart.total_price / 100).toFixed(2)}`);
+          } else if (/\/cart\/change/i.test(url)) {
+            if (mockCart.items.length > 0) {
+              const popped = mockCart.items.pop();
+              appendLog('fetch(/cart/change.js)', `Removed "${popped.title}" → Cart: ${sym}${(mockCart.total_price / 100).toFixed(2)}`);
+            }
+          } else if (/\/cart\/clear/i.test(url)) {
+            mockCart.items = [];
+            appendLog('fetch(/cart/clear.js)', `Cleared all items → ${sym}0.00`);
+          }
+
+          syncHarnessUI();
+
+          return new Response(JSON.stringify(mockCart.toJSON()), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          });
+        }
+
+        return nativeFetch(input, init);
+      };
+
+      function simulateAddToCart(priceDollars, title) {
+        window.fetch('/cart/add.js', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ priceDollars, title }),
+        });
+      }
+
+      function simulateRemoveItem() {
+        window.fetch('/cart/change.js', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ quantity: 0 }),
+        });
+      }
+
+      function simulateClearCart() {
+        window.fetch('/cart/clear.js', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+
+      // Button Handlers
+      document.getElementById('quick-add-tier1').addEventListener('click', () => {
+        const cur = mockCart.total_price / 100;
+        const delta = Math.max(10, 50 - cur);
+        simulateAddToCart(delta, 'Free Shipping Booster');
+      });
+      document.getElementById('quick-add-tier2').addEventListener('click', () => {
+        const cur = mockCart.total_price / 100;
+        const delta = Math.max(15, 80 - cur);
+        simulateAddToCart(delta, 'Gift Milestone Pack');
+      });
+      document.getElementById('quick-add-tier3').addEventListener('click', () => {
+        const cur = mockCart.total_price / 100;
+        const delta = Math.max(20, 120 - cur);
+        simulateAddToCart(delta, 'VIP Luxury Bundle');
+      });
+
+      document.getElementById('quick-remove-btn').addEventListener('click', () => simulateRemoveItem());
+      document.getElementById('quick-clear-btn').addEventListener('click', () => simulateClearCart());
+      document.getElementById('sim-exit-intent').addEventListener('click', () => {
+        sessionStorage.removeItem('__storeMascotExitTriggered__');
+        mascot._triggerExitIntentOffer();
+        appendLog('Exit Intent', 'Triggered exit-intent abandonment offer');
+      });
+
+      document.getElementById('quick-checkout-btn').addEventListener('click', () => {
+        mascot.nudge();
+        appendLog('Checkout', 'Triggered mascot NUDGE state');
+      });
+
+      document.querySelectorAll('.product-add-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          simulateAddToCart(parseFloat(btn.getAttribute('data-price')) || 20, btn.getAttribute('data-title') || 'Product');
+        });
+      });
+
+      stateButtons.forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const targetState = btn.getAttribute('data-trigger-state');
+          if (targetState === 'IDLE') mascot.setIdle({ hideBubble: true });
+          else if (targetState === 'CELEBRATE') mascot.celebrate('All Rewards Unlocked! 🎉');
+          else if (targetState === 'SAD') mascot.sad('Aww, item removed from cart.');
+          else if (targetState === 'NUDGE') mascot.nudge();
+          appendLog('setState()', `Transitioned to ${targetState}`);
+        });
+      });
+
+      window.addEventListener('mascot:statechange', (e) => {
+        const st = e.detail.state;
+        headerStateEl.textContent = st;
+        stateButtons.forEach((b) => b.classList.toggle('active', b.getAttribute('data-trigger-state') === st));
+      });
+
+      // Settings Handlers
+      document.getElementById('select-persona').addEventListener('change', (e) => {
+        mascot.setAttribute('persona', e.target.value);
+        headerPersonaEl.textContent = e.target.value.toUpperCase();
+        appendLog('Persona Change', `Switched character to "${e.target.value}"`);
+      });
+
+      document.getElementById('toggle-sound').addEventListener('change', (e) => {
+        mascot.setAttribute('enable-sound', e.target.checked ? 'true' : 'false');
+        appendLog('Audio Chimes', `Sound effects ${e.target.checked ? 'enabled' : 'muted'}`);
+      });
+
+      document.getElementById('input-tier1').addEventListener('change', (e) => {
+        mascot.setAttribute('tier1-threshold', e.target.value);
+        mascot.setAttribute('free-shipping-threshold', e.target.value);
+        syncHarnessUI();
+      });
+
+      document.getElementById('input-tier2').addEventListener('change', (e) => {
+        mascot.setAttribute('tier2-threshold', e.target.value);
+      });
+
+      document.getElementById('input-tier3').addEventListener('change', (e) => {
+        mascot.setAttribute('tier3-threshold', e.target.value);
+      });
+
+      document.getElementById('toggle-exit').addEventListener('change', (e) => {
+        mascot.setAttribute('enable-exit-intent', e.target.checked ? 'true' : 'false');
+      });
+
+      document.getElementById('select-position').addEventListener('change', (e) => {
+        mascot.setAttribute('position', e.target.value);
+      });
+
+      document.getElementById('range-offset-x').addEventListener('input', (e) => {
+        document.getElementById('val-offset-x').textContent = e.target.value;
+        mascot.setAttribute('offset-x', e.target.value);
+      });
+
+      document.getElementById('range-offset-y').addEventListener('input', (e) => {
+        document.getElementById('val-offset-y').textContent = e.target.value;
+        mascot.setAttribute('offset-y', e.target.value);
+      });
+
+      document.getElementById('toggle-branding').addEventListener('change', (e) => {
+        mascot.setAttribute('show-branding', e.target.checked ? 'true' : 'false');
+      });
+
+      // ROI Modal Logic
+      const roiModal = document.getElementById('roi-modal');
+      const statRevenue = document.getElementById('stat-revenue');
+      const statRoi = document.getElementById('stat-roi');
+      const statMilestones = document.getElementById('stat-milestones');
+      const statRecovered = document.getElementById('stat-recovered');
+
+      function updateRoiModalStats() {
+        const metrics = mascot.getAnalytics();
+        const rev = metrics.attributedRevenue || 0;
+        const planCost = 49;
+        const roiMult = (rev / planCost).toFixed(1);
+
+        statRevenue.textContent = `$${rev.toFixed(2)}`;
+        statRoi.textContent = `${roiMult}x`;
+        statMilestones.textContent = String(metrics.milestonesReached || 0);
+        statRecovered.textContent = String(metrics.exitOffersConverted || 0);
+      }
+
+      document.getElementById('open-roi-modal').addEventListener('click', () => {
+        updateRoiModalStats();
+        roiModal.classList.add('open');
+      });
+      document.getElementById('close-roi-modal').addEventListener('click', () => {
+        roiModal.classList.remove('open');
+      });
+      roiModal.addEventListener('click', (e) => {
+        if (e.target === roiModal) roiModal.classList.remove('open');
+      });
+
+      document.getElementById('simulate-traffic-btn').addEventListener('click', () => {
+        for (let i = 0; i < 25; i++) {
+          if (Math.random() > 0.4) {
+            window.localStorage.setItem(
+              '__storeMascotAnalytics__',
+              JSON.stringify({
+                ...mascot.getAnalytics(),
+                impressions: (mascot.getAnalytics().impressions || 0) + 1,
+                milestonesReached: (mascot.getAnalytics().milestonesReached || 0) + 1,
+                exitOffersConverted: (mascot.getAnalytics().exitOffersConverted || 0) + (Math.random() > 0.6 ? 1 : 0),
+                attributedRevenue: (mascot.getAnalytics().attributedRevenue || 0) + (45 + Math.floor(Math.random() * 55)),
+              })
+            );
+          }
+        }
+        updateRoiModalStats();
+        appendLog('Traffic Sim', 'Simulated 25 storefront sessions with conversions');
+      });
+
+      document.getElementById('reset-analytics-btn').addEventListener('click', () => {
+        mascot.resetAnalytics();
+        updateRoiModalStats();
+        appendLog('Analytics', 'Reset all ROI metrics');
+      });
+
+      syncHarnessUI();
+      appendLog('Hydration', 'Loaded <store-mascot> with Multi-Tier Gamification & Personas');
+    });
+  </script>
+</body>
+</html>

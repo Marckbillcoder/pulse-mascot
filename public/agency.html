@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PulseMascot Agency Command Center | Shopify Plus Multi-Store Management</title>
+  <link rel="stylesheet" href="https://unpkg.com/@shopify/polaris@13.0.0/build/esm/styles.css" />
+  <style>
+    :root {
+      --p-surface: #ffffff;
+      --p-bg-subdued: #f6f6f7;
+      --p-border: #e1e3e5;
+      --p-text: #202223;
+      --p-text-subdued: #6d7175;
+      --p-interactive: #008060;
+      --p-interactive-hover: #004c3f;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: #f1f2f4;
+      color: var(--p-text);
+      line-height: 1.5;
+      padding-bottom: 80px;
+    }
+
+    .admin-header {
+      background: #ffffff;
+      border-bottom: 1px solid var(--p-border);
+      padding: 16px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .header-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .brand-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #10b981, #047857);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-weight: 800;
+      font-size: 18px;
+    }
+    .brand-title {
+      font-size: 17px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .pill {
+      font-size: 12px;
+      font-weight: 600;
+      padding: 5px 12px;
+      border-radius: 999px;
+      background: #eef2ff;
+      color: #4338ca;
+      border: 1px solid #c7d2fe;
+    }
+    .pill-green {
+      background: #ecfdf5;
+      color: #065f46;
+      border-color: #a7f3d0;
+    }
+    .pill-gold {
+      background: #fffbeb;
+      color: #92400e;
+      border-color: #fde68a;
+    }
+
+    .main-layout {
+      max-width: 1280px;
+      margin: 28px auto;
+      padding: 0 20px;
+    }
+
+    .banner-agency {
+      background: linear-gradient(135deg, #0f172a, #1e293b);
+      border-radius: 14px;
+      padding: 24px 28px;
+      color: #fff;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .banner-title {
+      font-size: 20px;
+      font-weight: 800;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .banner-sub {
+      font-size: 13px;
+      color: #94a3b8;
+    }
+
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    @media (max-width: 900px) { .kpi-grid { grid-template-columns: repeat(2, 1fr); } }
+
+    .kpi-card {
+      background: #ffffff;
+      border: 1px solid var(--p-border);
+      border-radius: 14px;
+      padding: 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+    .kpi-label {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      color: var(--p-text-subdued);
+      margin-bottom: 8px;
+    }
+    .kpi-value {
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--p-text);
+      letter-spacing: -0.02em;
+    }
+    .kpi-value.green { color: #008060; }
+    .kpi-sub {
+      font-size: 12px;
+      font-weight: 500;
+      color: #008060;
+      margin-top: 6px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .card {
+      background: #ffffff;
+      border: 1px solid var(--p-border);
+      border-radius: 14px;
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+    .card-title {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .card-subtitle {
+      font-size: 13px;
+      color: var(--p-text-subdued);
+      margin-bottom: 18px;
+    }
+
+    .polaris-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      text-align: left;
+    }
+    .polaris-table th {
+      background: #f8fafc;
+      padding: 12px 14px;
+      font-weight: 600;
+      color: var(--p-text-subdued);
+      border-bottom: 1px solid var(--p-border);
+      text-transform: uppercase;
+      font-size: 11px;
+      letter-spacing: .03em;
+    }
+    .polaris-table td {
+      padding: 14px;
+      border-bottom: 1px solid var(--p-border);
+      color: var(--p-text);
+    }
+    .polaris-table tr:hover { background: #fbfcfd; }
+    .polaris-table tr:last-child td { border-bottom: none; }
+
+    .btn-primary {
+      background: #008060;
+      color: #fff;
+      border: none;
+      padding: 9px 18px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: background .15s;
+    }
+    .btn-primary:hover { background: #006e52; }
+
+    .btn-secondary {
+      background: #fff;
+      color: var(--p-text);
+      border: 1px solid var(--p-border);
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: background .15s;
+    }
+    .btn-secondary:hover { background: #f6f6f7; }
+
+    .form-group { margin-bottom: 16px; }
+    .form-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: var(--p-text);
+    }
+    .form-input, .form-select {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid var(--p-border);
+      border-radius: 8px;
+      font-size: 14px;
+      color: var(--p-text);
+      background: #fff;
+      outline: none;
+    }
+    .form-input:focus, .form-select:focus {
+      border-color: #008060;
+      box-shadow: 0 0 0 1px #008060;
+    }
+    .form-row {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+    }
+
+    .badge-persona {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: #f1f5f9;
+      color: #334155;
+    }
+    .badge-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: #ecfdf5;
+      color: #065f46;
+    }
+  </style>
+</head>
+<body>
+
+  <header class="admin-header">
+    <div class="header-brand">
+      <div class="brand-icon">🏢</div>
+      <div>
+        <div class="brand-title" id="agency-nav-title">Apex Commerce Partners</div>
+        <div style="font-size: 12px; color: var(--p-text-subdued);">Enterprise Agency Command Center • Shopify Plus</div>
+      </div>
+    </div>
+    <div class="header-actions">
+      <span class="pill pill-gold">👑 Agency Tier ($499/mo)</span>
+      <span class="pill pill-green" id="agency-revshare-badge">💰 Partner Rev-Share: $498.00/mo (20%)</span>
+      <a href="/admin" class="btn-secondary" style="font-size: 12px;">← Store Admin</a>
+    </div>
+  </header>
+
+  <main class="main-layout">
+    <!-- Agency Hero Banner -->
+    <div class="banner-agency">
+      <div>
+        <div class="banner-title">
+          <span>🚀 Multi-Store Portfolio Overview</span>
+          <span class="badge-status">White-Label Active</span>
+        </div>
+        <div class="banner-sub">
+          Managing 5 client merchant stores with unified telemetry, AI persona optimization &amp; zero-footprint Theme App Extensions.
+        </div>
+      </div>
+      <div style="display: flex; gap: 10px;">
+        <button type="button" class="btn-primary" id="add-store-btn" style="background: #10b981;">+ Add Client Store</button>
+        <button type="button" class="btn-secondary" id="export-qbr-btn" style="background: rgba(255,255,255,0.12); color: #fff; border-color: rgba(255,255,255,0.2);">📥 Export QBR Report</button>
+      </div>
+    </div>
+
+    <!-- Aggregate Portfolio KPIs -->
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-label">Total Portfolio GMV Influenced</div>
+        <div class="kpi-value green" id="kpi-gmv">$184,520.00</div>
+        <div class="kpi-sub">Across 5 active client brands</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Net Incremental Lift</div>
+        <div class="kpi-value" id="kpi-lift">+$48,290.00</div>
+        <div class="kpi-sub">↑ +26.8% Average AOV Lift</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Carts Recovered (Exit Saver)</div>
+        <div class="kpi-value" id="kpi-recovered">599</div>
+        <div class="kpi-sub">28.4% average recovery rate</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Monthly Agency Rev-Share</div>
+        <div class="kpi-value green" id="kpi-revshare">$498.00</div>
+        <div class="kpi-sub">20% recurring monthly payout</div>
+      </div>
+    </div>
+
+    <!-- Client Stores Portfolio Table -->
+    <div class="card">
+      <div class="card-title">
+        <span>🏪 Managed Merchant Stores Portfolio</span>
+        <span style="font-size: 12px; color: var(--p-text-subdued);">Real-time client telemetry sync</span>
+      </div>
+      <div class="card-subtitle">
+        Click any client store to configure threshold tiers, persona skins, or generate white-labeled performance audits.
+      </div>
+
+      <div style="overflow-x: auto;">
+        <table class="polaris-table">
+          <thead>
+            <tr>
+              <th>Client Store</th>
+              <th>Brand Niche</th>
+              <th>Active Persona</th>
+              <th>Plan</th>
+              <th>Average Order Value</th>
+              <th>AOV Lift</th>
+              <th>Attributed Revenue</th>
+              <th>Recovered Carts</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="stores-table-body">
+            <!-- Dynamically populated from /api/agency/stores -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Agency White-Label Configuration -->
+    <div class="card">
+      <div class="card-title">
+        <span>🎨 Agency White-Label &amp; Rebranding Settings</span>
+        <span class="pill pill-gold">Included in Enterprise ($499/mo)</span>
+      </div>
+      <div class="card-subtitle">
+        Completely rebrand PulseMascot across all client storefronts and merchant admin dashboards with your agency's logo and credentials.
+      </div>
+
+      <form id="whitelabel-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="wl-agency-name">Agency / Organization Name</label>
+            <input class="form-input" type="text" id="wl-agency-name" value="Apex Commerce Partners" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="wl-badge-text">Storefront Footer Badge Text</label>
+            <input class="form-input" type="text" id="wl-badge-text" value="Powered by Apex CRO Engine" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="wl-primary-color">Agency Brand Accent Color</label>
+            <input class="form-input" type="text" id="wl-primary-color" value="#008060" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="wl-hide-branding">PulseMascot Branding Visibility</label>
+            <select class="form-select" id="wl-hide-branding">
+              <option value="true" selected>100% White-Label (Hide PulseMascot branding)</option>
+              <option value="false">Show standard branding</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 12px; margin-top: 10px;">
+          <button type="submit" class="btn-primary" id="save-wl-btn">Save White-Label Settings</button>
+          <button type="button" class="btn-secondary" id="preview-badge-btn">👁️ Test Storefront Badge</button>
+        </div>
+      </form>
+    </div>
+  </main>
+
+  <!-- Add Store Modal Dialog -->
+  <div id="add-store-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+    <div style="background: #fff; border-radius: 14px; max-width: 500px; width: 90%; padding: 28px; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
+      <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 14px;">+ Add Client Store to Portfolio</h3>
+      <form id="new-store-form">
+        <div class="form-group">
+          <label class="form-label">Client Store Name</label>
+          <input class="form-input" type="text" id="new-store-name" placeholder="e.g. Velvet & Oak Apparel" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Shopify Domain</label>
+          <input class="form-input" type="text" id="new-store-domain" placeholder="e.g. velvet-oak.myshopify.com" required />
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Brand Niche</label>
+            <input class="form-input" type="text" id="new-store-niche" placeholder="e.g. Luxury Jewelry" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Persona Skin</label>
+            <select class="form-select" id="new-store-persona">
+              <option value="orb">Orb (Minimalist/Luxury)</option>
+              <option value="pet">Pet (Cute/Lifestyle)</option>
+              <option value="boba">Boba (Playful/Food)</option>
+              <option value="ghost">Ghost (Streetwear)</option>
+              <option value="dragon">Dragon (Gaming/Anime)</option>
+            </select>
+          </div>
+        </div>
+        <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 14px;">
+          <button type="button" class="btn-secondary" id="cancel-add-btn">Cancel</button>
+          <button type="submit" class="btn-primary">Add Store</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast Notification Banner -->
+  <div id="toast-banner" style="display: none; position: fixed; bottom: 24px; right: 24px; background: #202223; color: #fff; padding: 12px 20px; border-radius: 8px; font-size: 13px; font-weight: 600; box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 999;">
+    <span id="toast-message">Action Successful</span>
+  </div>
+
+  <script>
+    function showToast(msg) {
+      const toast = document.getElementById('toast-banner');
+      document.getElementById('toast-message').textContent = msg;
+      toast.style.display = 'block';
+      setTimeout(() => { toast.style.display = 'none'; }, 3000);
+    }
+
+    async function loadAgencyData() {
+      try {
+        const res = await fetch('/api/agency/stores');
+        const data = await res.json();
+
+        document.getElementById('agency-nav-title').textContent = data.agencyName || 'Apex Commerce Partners';
+        document.getElementById('wl-agency-name').value = data.agencyName || '';
+        if (data.customBranding) {
+          document.getElementById('wl-badge-text').value = data.customBranding.badgeText || '';
+          document.getElementById('wl-primary-color').value = data.customBranding.primaryColor || '#008060';
+        }
+
+        const sum = data.portfolioSummary || {};
+        document.getElementById('kpi-gmv').textContent = `$${Number(sum.totalMonthlyGmvInfluenced || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+        document.getElementById('kpi-lift').textContent = `+$${Number(sum.netRevenueLift || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+        document.getElementById('kpi-recovered').textContent = String(sum.totalCartsRecovered || 0);
+        document.getElementById('kpi-revshare').textContent = `$${Number(sum.monthlyRevShareEarned || 0).toFixed(2)}`;
+        document.getElementById('agency-revshare-badge').textContent = `💰 Partner Rev-Share: $${Number(sum.monthlyRevShareEarned || 0).toFixed(2)}/mo (20%)`;
+
+        const tbody = document.getElementById('stores-table-body');
+        tbody.innerHTML = '';
+        (data.stores || []).forEach(store => {
+          const tr = document.createElement('tr');
+          const personaIcons = { orb: '🔮', pet: '🐾', boba: '🧋', ghost: '👻', dragon: '🐉' };
+          tr.innerHTML = `
+            <td>
+              <strong>${store.name}</strong>
+              <div style="font-size: 11px; color: #6d7175;">${store.domain}</div>
+            </td>
+            <td>${store.niche}</td>
+            <td><span class="badge-persona">${personaIcons[store.persona] || '⚡'} ${store.persona.toUpperCase()}</span></td>
+            <td><span style="font-size: 12px; font-weight: 600;">${store.plan}</span></td>
+            <td><strong>$${Number(store.aov).toFixed(2)}</strong></td>
+            <td style="color: #008060; font-weight: 700;">${store.aovLift}</td>
+            <td style="font-weight: 700; color: #008060;">$${Number(store.monthlyAttributedRev).toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
+            <td><strong>${store.recoveredCarts}</strong></td>
+            <td><span class="badge-status">${store.status}</span></td>
+            <td>
+              <button class="btn-secondary" style="padding: 4px 10px; font-size: 11px;" onclick="window.location.href='/admin?shop=${store.domain}'">Manage →</button>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+      } catch (err) {
+        console.error('Failed to load agency data:', err);
+      }
+    }
+
+    // White-label form submit
+    document.getElementById('whitelabel-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const saveBtn = document.getElementById('save-wl-btn');
+      saveBtn.textContent = 'Saving...';
+      const payload = {
+        agencyName: document.getElementById('wl-agency-name').value,
+        customBranding: {
+          badgeText: document.getElementById('wl-badge-text').value,
+          primaryColor: document.getElementById('wl-primary-color').value,
+          hidePulseBranding: document.getElementById('wl-hide-branding').value === 'true'
+        }
+      };
+      try {
+        await fetch('/api/agency/update', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        saveBtn.textContent = 'Saved! ✓';
+        showToast('White-label settings updated across all client storefronts!');
+        setTimeout(() => { saveBtn.textContent = 'Save White-Label Settings'; }, 2000);
+      } catch (_) {
+        saveBtn.textContent = 'Error';
+      }
+    });
+
+    // Modal Handlers
+    const modal = document.getElementById('add-store-modal');
+    document.getElementById('add-store-btn').addEventListener('click', () => { modal.style.display = 'flex'; });
+    document.getElementById('cancel-add-btn').addEventListener('click', () => { modal.style.display = 'none'; });
+
+    document.getElementById('new-store-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const payload = {
+        name: document.getElementById('new-store-name').value,
+        domain: document.getElementById('new-store-domain').value,
+        niche: document.getElementById('new-store-niche').value,
+        persona: document.getElementById('new-store-persona').value
+      };
+      await fetch('/api/agency/add-store', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      modal.style.display = 'none';
+      showToast(`Added ${payload.name} to agency portfolio!`);
+      loadAgencyData();
+    });
+
+    document.getElementById('export-qbr-btn').addEventListener('click', () => {
+      window.location.href = '/api/export-csv';
+      showToast('Exported Consolidated Agency QBR Report (CSV)!');
+    });
+
+    document.getElementById('preview-badge-btn').addEventListener('click', () => {
+      showToast(`Storefront preview: "${document.getElementById('wl-badge-text').value}"`);
+    });
+
+    loadAgencyData();
+  </script>
+</body>
+</html>

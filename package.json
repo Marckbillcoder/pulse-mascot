@@ -1,0 +1,26 @@
+{
+  "name": "pulse-mascot-app",
+  "version": "1.0.0",
+  "description": "PulseMascot: High-Converting Interactive AOV & Gamified Storefront Companion (Shopify Theme App Extension)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node scripts/verify.js",
+    "dev": "shopify app dev",
+    "deploy": "shopify app deploy",
+    "info": "shopify app info"
+  },
+  "keywords": [
+    "shopify",
+    "theme-app-extension",
+    "gamification",
+    "aov",
+    "free-shipping-bar",
+    "exit-intent",
+    "ab-testing",
+    "conversion-optimization"
+  ],
+  "author": "PulseMascot Team",
+  "license": "UNLICENSED",
+  "private": true
+}
