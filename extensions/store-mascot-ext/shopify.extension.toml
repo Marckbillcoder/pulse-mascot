@@ -3,4 +3,5 @@ api_version = "2025-01"
 [[extensions]]
 name = "Store Mascot Companion"
 handle = "store-mascot-ext"
+uid = "da219ab5-d66a-74ce-d870-d3d4e2d5d0970432cebf"
 type = "theme"

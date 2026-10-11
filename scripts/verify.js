@@ -258,8 +258,12 @@ setTimeout(async () => {
     assert((agencyPageRes.headers['content-security-policy'] || '').includes('frame-ancestors'), 'Agency dashboard protected with Shopify CSP frame-ancestors');
 
     // Check Shopify Functions Extension Architecture
-    const fnTomlPath = path.join(__dirname, '..', 'extensions', 'cart-mascot-discount', 'shopify.extension.toml');
-    const fnJsPath = path.join(__dirname, '..', 'extensions', 'cart-mascot-discount', 'src', 'run.js');
+    const fnTomlPath = fs.existsSync(path.join(__dirname, '..', 'scaffolding', 'shopify.extension.toml'))
+      ? path.join(__dirname, '..', 'scaffolding', 'shopify.extension.toml')
+      : path.join(__dirname, '..', 'extensions', 'cart-mascot-discount', 'shopify.extension.toml');
+    const fnJsPath = fs.existsSync(path.join(__dirname, '..', 'scaffolding', 'src', 'run.js'))
+      ? path.join(__dirname, '..', 'scaffolding', 'src', 'run.js')
+      : path.join(__dirname, '..', 'extensions', 'cart-mascot-discount', 'src', 'run.js');
     assert(fs.existsSync(fnTomlPath), 'Shopify Functions shopify.extension.toml exists');
     assert(fs.existsSync(fnJsPath), 'Shopify Functions WASM execution logic (src/run.js) exists');
 

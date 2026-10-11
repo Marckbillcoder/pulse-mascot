@@ -3,6 +3,7 @@ api_version = "2025-01"
 [[extensions]]
 name = "PulseMascot Checkout Discount Function"
 handle = "mascot-cart-transform"
+uid = "eb87e82f-651b-f033-5023-65f338bc38a32994ba50"
 type = "function"
 
   [[extensions.targeting]]

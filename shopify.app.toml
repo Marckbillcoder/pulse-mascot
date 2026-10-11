@@ -1,40 +1,22 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
-name = "PulseMascot"
-client_id = ""
+client_id = "73a216a55fa8eef1934e37d4279bde2c"
 application_url = "https://pulse-mascot.onrender.com"
 embedded = true
-
-[access_scopes]
-# Theme App Extensions require zero invasive permissions for clean, instant App Store review approval
-scopes = ""
-
-[auth]
-redirect_urls = [ "https://pulse-mascot.onrender.com/api/auth" ]
+name = "PulseMascot"
 
 [webhooks]
 api_version = "2025-01"
 
-  [[webhooks.subscriptions]]
-  topics = [ "app/uninstalled" ]
-  uri = "/api/webhooks/app-uninstalled"
+[access_scopes]
+# Section 1.1.3: Least privilege architecture (0 invasive scopes required)
+scopes = ""
 
-  [[webhooks.subscriptions]]
-  topics = [ "customers/data_request" ]
-  uri = "/api/webhooks/customers-data-request"
+[auth]
+redirect_urls = [
+  "https://pulse-mascot.onrender.com/api/auth",
+  "https://pulse-mascot.onrender.com/api/auth/callback"
+]
 
-  [[webhooks.subscriptions]]
-  topics = [ "customers/redact" ]
-  uri = "/api/webhooks/customers-redact"
-
-  [[webhooks.subscriptions]]
-  topics = [ "shop/redact" ]
-  uri = "/api/webhooks/shop-redact"
-
-[app_proxy]
-url = "https://pulse-mascot.onrender.com/api/telemetry"
-subpath = "pulse-mascot"
-prefix = "apps"
-
-[pos]
-embedded = false
+[build]
+automatically_update_urls_on_dev = true
