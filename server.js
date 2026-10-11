@@ -759,11 +759,19 @@ const server = http.createServer((req, res) => {
     }
   }
 
-  // --- Serve Embedded Admin App (Shopify CSP Frame-Ancestors Compliant) ---
-  if (pathname === '/' || pathname === '/admin' || pathname === '/admin/') {
+  // --- Serve Embedded Admin App & Auth Endpoints (Shopify CSP Frame-Ancestors Compliant) ---
+  if (
+    pathname === '/' ||
+    pathname === '/admin' ||
+    pathname === '/admin/' ||
+    pathname === '/api/auth' ||
+    pathname === '/api/auth/callback' ||
+    pathname === '/auth' ||
+    pathname === '/auth/callback'
+  ) {
     const adminPath = path.join(PUBLIC_DIR, 'admin.html');
     if (fs.existsSync(adminPath)) {
-      const shopParam = parsed.query && parsed.query.shop;
+      const shopParam = (parsed.query && parsed.query.shop) || '';
       const targetShop = shopParam ? `https://${shopParam}` : 'https://*.myshopify.com';
       res.setHeader('Content-Security-Policy', `frame-ancestors ${targetShop} https://admin.shopify.com;`);
       res.writeHead(200, { 'Content-Type': 'text/html; charset=UTF-8' });
