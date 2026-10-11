@@ -2,7 +2,7 @@
 
 name = "PulseMascot"
 client_id = ""
-application_url = "https://shopify.dev/apps/default-app-home"
+application_url = "https://pulse-mascot.onrender.com"
 embedded = true
 
 [access_scopes]
@@ -10,7 +10,7 @@ embedded = true
 scopes = ""
 
 [auth]
-redirect_urls = [ "https://shopify.dev/apps/default-app-home/api/auth" ]
+redirect_urls = [ "https://pulse-mascot.onrender.com/api/auth" ]
 
 [webhooks]
 api_version = "2025-01"
@@ -32,7 +32,7 @@ api_version = "2025-01"
   uri = "/api/webhooks/shop-redact"
 
 [app_proxy]
-url = "https://shopify.dev/apps/default-app-home/api/telemetry"
+url = "https://pulse-mascot.onrender.com/api/telemetry"
 subpath = "pulse-mascot"
 prefix = "apps"
 
