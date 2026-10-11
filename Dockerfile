@@ -18,9 +18,11 @@ ENV PORT=3000
 COPY package.json ./
 COPY server.js ./
 COPY mascot-widget.js ./
+COPY index.html ./
 COPY shopify.app.toml ./
 COPY public ./public
 COPY extensions ./extensions
+COPY data ./data
 
 # Create data directory with permissions for non-root node user
 RUN mkdir -p /app/data && chown -R node:node /app
