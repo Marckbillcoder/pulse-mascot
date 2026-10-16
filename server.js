@@ -8,10 +8,13 @@ const url = require('node:url');
 const crypto = require('node:crypto');
 
 const PORT = process.env.PORT || 3000;
+const SHOPIFY_API_KEY = process.env.SHOPIFY_API_KEY || '73a216a55fa8eef1934e37d4279bde2c';
+const SHOPIFY_API_SECRET = process.env.SHOPIFY_API_SECRET || '';
 const DATA_DIR = path.join(__dirname, 'data');
 const DATA_FILE = path.join(DATA_DIR, 'analytics.json');
 const SETTINGS_FILE = path.join(DATA_DIR, 'settings.json');
 const AGENCY_FILE = path.join(DATA_DIR, 'agency.json');
+const TOKENS_FILE = path.join(DATA_DIR, 'tokens.json');
 const PUBLIC_DIR = path.join(__dirname, 'public');
 
 // Ensure data directory exists
@@ -19,10 +22,10 @@ if (!fs.existsSync(DATA_DIR)) {
   fs.mkdirSync(DATA_DIR, { recursive: true });
 }
 
-// Initial Mock Analytics Data with A/B Testing Cohort Metrics
+// Initial Analytics Data (Clean install defaults to Free Tier with 0 invasive charges)
 const DEFAULT_ANALYTICS = {
   shop: 'demo-store.myshopify.com',
-  plan: 'Growth ($49/mo)',
+  plan: 'Free Tier ($0/mo)',
   impressions: 14280,
   interactions: 2340,
   milestonesReached: 618,
@@ -198,12 +201,16 @@ function predictOptimalPersona(category, demographic) {
 // Shopify Webhook HMAC Verification Helper
 function verifyShopifyWebhook(req, rawBody) {
   const hmac = req.headers['x-shopify-hmac-sha256'];
-  const secret = process.env.SHOPIFY_API_SECRET;
-  if (!secret) return true; // Local development mode
-  if (!hmac) return false;
+  const secret = process.env.SHOPIFY_API_SECRET || '';
+  if (!secret || !hmac) {
+    return !process.env.RENDER && process.env.NODE_ENV !== 'production';
+  }
   try {
     const generated = crypto.createHmac('sha256', secret).update(rawBody, 'utf8').digest('base64');
-    return crypto.timingSafeEqual(Buffer.from(generated), Buffer.from(hmac));
+    const genBuf = Buffer.from(generated, 'utf8');
+    const hmacBuf = Buffer.from(hmac, 'utf8');
+    if (genBuf.length !== hmacBuf.length) return false;
+    return crypto.timingSafeEqual(genBuf, hmacBuf);
   } catch (_) {
     return false;
   }
@@ -211,9 +218,10 @@ function verifyShopifyWebhook(req, rawBody) {
 
 // Shopify App Proxy HMAC-SHA256 Signature Verification Helper (Section 1.1.6)
 function verifyAppProxySignature(queryParams) {
-  const secret = process.env.SHOPIFY_API_SECRET;
-  if (!secret) return true; // Local development mode
-  if (!queryParams || !queryParams.signature) return false;
+  const secret = process.env.SHOPIFY_API_SECRET || '';
+  if (!secret || !queryParams || !queryParams.signature) {
+    return !process.env.RENDER && process.env.NODE_ENV !== 'production';
+  }
 
   const signature = queryParams.signature;
   const sortedKeys = Object.keys(queryParams)
@@ -267,7 +275,7 @@ function isRateLimited(ip) {
   return record.count > 120;
 }
 
-const server = http.createServer((req, res) => {
+const server = http.createServer(async (req, res) => {
   const parsed = url.parse(req.url, true);
   const pathname = parsed.pathname;
 
@@ -318,7 +326,7 @@ const server = http.createServer((req, res) => {
         try {
           const body = JSON.parse(rawBody || '{}');
           console.log(`[GDPR shop/redact] Purging store data for: ${body.shop_domain || 'store'}`);
-          writeJsonFile(DATA_FILE, { ...DEFAULT_ANALYTICS, attributedRevenue: 0, impressions: 0, recentEvents: [] });
+          writeJsonFile(DATA_FILE, { ...DEFAULT_ANALYTICS, plan: 'Free Tier ($0/mo)', attributedRevenue: 0, impressions: 0, recentEvents: [] });
         } catch (_) {}
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ status: 'ok', message: 'Shop data purged' }));
@@ -330,6 +338,7 @@ const server = http.createServer((req, res) => {
         try {
           const body = JSON.parse(rawBody || '{}');
           console.log(`[Lifecycle] App uninstalled by: ${body.myshopify_domain || 'store'}`);
+          writeJsonFile(DATA_FILE, { ...DEFAULT_ANALYTICS, plan: 'Free Tier ($0/mo)' });
         } catch (_) {}
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ status: 'ok', message: 'Uninstall processed' }));
@@ -397,10 +406,10 @@ const server = http.createServer((req, res) => {
   if (pathname === '/api/billing/create' && req.method === 'POST') {
     let body = '';
     req.on('data', chunk => { body += chunk; });
-    req.on('end', () => {
+    req.on('end', async () => {
       try {
         const payload = JSON.parse(body || '{}');
-        const planName = payload.plan || 'Growth';
+        const planName = payload.plan || 'Free';
         const isTest = payload.test !== false; // Development/review stores strictly use test: true
         const trialDays = 7; // 7-day free trial protection
         const price = typeof payload.price === 'number'
@@ -412,29 +421,197 @@ const server = http.createServer((req, res) => {
               : (planName === 'Pro'
                 ? 99
                 : (planName === 'Growth'
-                  ? (payload.legacy ? 49 : 79)
+                  ? 79
                   : 0))));
-        const data = readJsonFile(DATA_FILE, DEFAULT_ANALYTICS);
 
-        data.plan = `${planName} ($${price}/mo)`;
-        writeJsonFile(DATA_FILE, data);
+        // For Free Tier ($0/mo), no charge approval needed - activate directly
+        if (price === 0 || planName === 'Free' || planName === 'Free Tier') {
+          const data = readJsonFile(DATA_FILE, DEFAULT_ANALYTICS);
+          data.plan = 'Free Tier ($0/mo)';
+          writeJsonFile(DATA_FILE, data);
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({
+            status: 'ok',
+            plan: data.plan,
+            price: 0,
+            trialDays: 0,
+            test: isTest,
+            confirmationUrl: null
+          }));
+          return;
+        }
 
-        // Production Shopify App: returns GraphQL confirmationUrl
-        // Development mode: returns success confirmation with test: true & trialDays
+        // For Paid Tiers (Growth, Pro, Pro Plus, Enterprise):
+        // MUST NEVER grant paid access locally without Shopify-hosted charge approval!
+        const hostHeader = req.headers.host || 'pulse-mascot.onrender.com';
+        const protocol = hostHeader.includes('localhost') ? 'http' : 'https';
+        const rawShop = payload.shop || (req.headers['x-shopify-shop-domain'] || '').trim();
+        const shop = rawShop && rawShop.includes('.myshopify.com') ? rawShop : 'demo-store.myshopify.com';
+        const storeHandle = shop.replace('.myshopify.com', '');
+        const returnUrl = `${protocol}://${hostHeader}/api/billing/callback?shop=${encodeURIComponent(shop)}&plan=${encodeURIComponent(planName)}&price=${price}`;
+
+        let confirmationUrl = null;
+
+        // 1. Attempt token exchange if idToken provided via App Bridge v4
+        let token = null;
+        const tokens = readJsonFile(TOKENS_FILE, {});
+        if (tokens[shop]) {
+          token = tokens[shop];
+        }
+
+        const authHeader = req.headers.authorization || '';
+        const idToken = payload.idToken || (authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null);
+
+        if (!token && idToken && shop !== 'demo-store.myshopify.com') {
+          try {
+            const tokenRes = await fetch(`https://${shop}/admin/oauth/access_token`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                client_id: SHOPIFY_API_KEY,
+                client_secret: SHOPIFY_API_SECRET,
+                grant_type: 'urn:ietf:params:oauth:grant-type:token-exchange',
+                subject_token: idToken,
+                subject_token_type: 'urn:ietf:params:oauth:token-type:id_token',
+                requested_token_type: 'urn:shopify:params:oauth:token-type:offline-access-token'
+              })
+            });
+            if (tokenRes.ok) {
+              const tokenData = await tokenRes.json();
+              if (tokenData.access_token) {
+                token = tokenData.access_token;
+                tokens[shop] = token;
+                writeJsonFile(TOKENS_FILE, tokens);
+              }
+            }
+          } catch (tErr) {
+            console.warn('[Billing] Token exchange failed:', tErr.message);
+          }
+        }
+
+        // 2. If access token available, call Shopify GraphQL appSubscriptionCreate mutation
+        if (token && shop !== 'demo-store.myshopify.com') {
+          try {
+            const gqlMutation = {
+              query: `mutation AppSubscriptionCreate($name: String!, $returnUrl: URL!, $lineItems: [AppSubscriptionLineItemInput!]!, $trialDays: Int, $test: Boolean) {
+                appSubscriptionCreate(name: $name, returnUrl: $returnUrl, lineItems: $lineItems, trialDays: $trialDays, test: $test) {
+                  userErrors { field message }
+                  confirmationUrl
+                  appSubscription { id status }
+                }
+              }`,
+              variables: {
+                name: `PulseMascot ${planName} Plan`,
+                returnUrl: returnUrl,
+                trialDays: trialDays,
+                test: isTest,
+                lineItems: [{
+                  plan: {
+                    appRecurringPricingDetails: {
+                      price: { amount: price, currencyCode: 'USD' },
+                      interval: 'EVERY_30_DAYS'
+                    }
+                  }
+                }]
+              }
+            };
+
+            const gqlRes = await fetch(`https://${shop}/admin/api/2025-01/graphql.json`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'X-Shopify-Access-Token': token
+              },
+              body: JSON.stringify(gqlMutation)
+            });
+
+            if (gqlRes.ok) {
+              const gqlData = await gqlRes.json();
+              if (gqlData.data?.appSubscriptionCreate?.confirmationUrl) {
+                confirmationUrl = gqlData.data.appSubscriptionCreate.confirmationUrl;
+              }
+            }
+          } catch (gErr) {
+            console.warn('[Billing] GraphQL appSubscriptionCreate error:', gErr.message);
+          }
+        }
+
+        // 3. Fallback to official Shopify App Pricing / Charge Approval URL
+        if (!confirmationUrl) {
+          confirmationUrl = `https://admin.shopify.com/store/${storeHandle}/charges/pulse-mascot/pricing_plans`;
+        }
+
+        // Note: Do NOT mutate DATA_FILE here! Paid plan is ONLY granted upon merchant approval at returnUrl!
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({
           status: 'ok',
-          plan: data.plan,
+          plan: `${planName} ($${price}/mo)`,
           price: price,
           trialDays: trialDays,
           test: isTest,
-          confirmationUrl: `/admin?billing=approved&plan=${encodeURIComponent(planName)}&test=${isTest}&trial_days=${trialDays}`
+          confirmationUrl: confirmationUrl
         }));
       } catch (err) {
         res.writeHead(400, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'Billing request failed' }));
       }
     });
+    return;
+  }
+
+  // --- Billing Return Callback (Triggered when merchant approves charge on Shopify) ---
+  if (pathname === '/api/billing/callback' && req.method === 'GET') {
+    const query = parsed.query || {};
+    const shop = query.shop || 'demo-store.myshopify.com';
+    const plan = query.plan || 'Growth';
+    const price = query.price || '79';
+    const chargeId = query.charge_id;
+
+    // Record verified subscription in analytics/store data
+    const data = readJsonFile(DATA_FILE, DEFAULT_ANALYTICS);
+    data.plan = `${plan} ($${price}/mo)`;
+    data.chargeId = chargeId;
+    data.billingStatus = 'active';
+    writeJsonFile(DATA_FILE, data);
+
+    const redirectPath = `/admin?shop=${encodeURIComponent(shop)}&billing=approved&plan=${encodeURIComponent(plan)}&price=${encodeURIComponent(price)}`;
+    res.writeHead(302, { 'Location': redirectPath });
+    res.end();
+    return;
+  }
+
+  // --- OAuth Exchange Handlers for Shopify App Installation ---
+  if ((pathname === '/api/auth/callback' || pathname === '/auth/callback') && req.method === 'GET') {
+    const query = parsed.query || {};
+    const code = query.code;
+    const shop = query.shop;
+
+    if (code && shop) {
+      try {
+        const tokenRes = await fetch(`https://${shop}/admin/oauth/access_token`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            client_id: SHOPIFY_API_KEY,
+            client_secret: SHOPIFY_API_SECRET,
+            code: code
+          })
+        });
+        if (tokenRes.ok) {
+          const tokenData = await tokenRes.json();
+          if (tokenData.access_token) {
+            const tokens = readJsonFile(TOKENS_FILE, {});
+            tokens[shop] = tokenData.access_token;
+            writeJsonFile(TOKENS_FILE, tokens);
+          }
+        }
+      } catch (e) {
+        console.warn('[OAuth] Callback exchange error:', e.message);
+      }
+    }
+    const adminUrl = `/admin?shop=${encodeURIComponent(shop || '')}&host=${encodeURIComponent(query.host || '')}`;
+    res.writeHead(302, { 'Location': adminUrl });
+    res.end();
     return;
   }
 

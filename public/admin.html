@@ -372,8 +372,8 @@
       <a href="/agency" class="pill pill-gold" style="text-decoration: none; font-weight: 700; display: inline-flex; align-items: center; gap: 5px;">🏢 Agency Portal ($499/mo)</a>
       <button type="button" id="open-support-btn" class="pill" style="border: 1px solid var(--p-border); background: #fff; color: #1e293b; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">💬 Help &amp; Support</button>
       <a href="/api/export-csv" download="pulsemascot-attribution.csv" class="pill" style="text-decoration: none; color: #1e293b; background: #fff; border-color: var(--p-border); display: inline-flex; align-items: center; gap: 4px; font-weight: 600;">📥 Export CSV</a>
-      <span class="pill">Store: demo-store.myshopify.com</span>
-      <span class="pill pill-green" id="active-plan-badge">Growth Plan ($79/mo) • Active</span>
+      <span class="pill" id="store-domain-pill">Store: demo-store.myshopify.com</span>
+      <span class="pill pill-green" id="active-plan-badge">Free Tier ($0/mo) • Active</span>
     </div>
   </header>
 
@@ -455,8 +455,8 @@
       </div>
       <div class="kpi-card">
         <div class="kpi-label">Return on Investment</div>
-        <div class="kpi-value" id="kpi-roi">315x</div>
-        <div class="kpi-sub">On your $49/mo plan</div>
+        <div class="kpi-value" id="kpi-roi">∞ (Free)</div>
+        <div class="kpi-sub" id="roi-plan-sub">On Free Tier ($0/mo)</div>
       </div>
       <div class="kpi-card">
         <div class="kpi-label">Carts Recovered (Exit Offer)</div>
@@ -716,12 +716,12 @@
           <div class="card-subtitle">Select your scaling tier. 7-day risk-free trial on all plans.</div>
 
           <div class="pricing-grid" style="grid-template-columns: repeat(2, 1fr); gap: 12px;">
-            <div class="plan-box" data-plan="Free" data-price="0">
+            <div class="plan-box active" data-plan="Free" data-price="0">
               <div class="plan-name">Free Tier</div>
               <div class="plan-price">$0</div>
               <div class="plan-desc">1 Tier • Orb Persona • Basic Analytics</div>
             </div>
-            <div class="plan-box active" data-plan="Growth" data-price="79">
+            <div class="plan-box" data-plan="Growth" data-price="79">
               <div class="plan-name">Growth</div>
               <div class="plan-price">$79/mo</div>
               <div class="plan-desc">5 Personas • Multi-Tier • Exit Saver • Audio</div>
@@ -869,9 +869,38 @@
         const data = await res.json();
 
         document.getElementById('kpi-revenue').textContent = `$${data.attributedRevenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-        const planCost = 49;
-        const roi = (data.attributedRevenue / planCost).toFixed(0);
-        document.getElementById('kpi-roi').textContent = `${roi}x`;
+        const activePlan = data.plan || 'Free Tier ($0/mo)';
+        const planBadge = document.getElementById('active-plan-badge');
+        if (planBadge) planBadge.textContent = `${activePlan} • Active`;
+        if (data.shop && document.getElementById('store-domain-pill')) {
+          document.getElementById('store-domain-pill').textContent = `Store: ${data.shop}`;
+        }
+
+        const priceMatch = activePlan.match(/\$(\d+)/);
+        const planCost = priceMatch ? parseInt(priceMatch[1], 10) : 0;
+        const roiSub = document.getElementById('roi-plan-sub');
+        if (roiSub) {
+          if (planCost > 0) {
+            roiSub.textContent = `On your $${planCost}/mo plan`;
+            const roi = (data.attributedRevenue / planCost).toFixed(0);
+            document.getElementById('kpi-roi').textContent = `${roi}x`;
+          } else {
+            roiSub.textContent = `On Free Tier ($0/mo)`;
+            document.getElementById('kpi-roi').textContent = `∞ (Free)`;
+          }
+        }
+
+        document.querySelectorAll('.plan-box').forEach(box => {
+          const boxPlan = box.getAttribute('data-plan');
+          if (boxPlan === 'Free' && planCost === 0) {
+            box.classList.add('active');
+          } else if (boxPlan !== 'Free' && activePlan.toLowerCase().includes(boxPlan.toLowerCase())) {
+            box.classList.add('active');
+          } else {
+            box.classList.remove('active');
+          }
+        });
+
         document.getElementById('kpi-recovered').textContent = String(data.exitOffersConverted || 0);
         document.getElementById('kpi-milestones').textContent = String(data.milestonesReached || 0);
 
@@ -1010,21 +1039,61 @@
     // Shopify Billing API Plan Selector (Section 1.2.1, 1.2.2 & 1.2.3)
     document.querySelectorAll('.plan-box').forEach(box => {
       box.addEventListener('click', async () => {
-        document.querySelectorAll('.plan-box').forEach(b => b.classList.remove('active'));
-        box.classList.add('active');
         const plan = box.getAttribute('data-plan');
+        const price = parseInt(box.getAttribute('data-price') || '0', 10);
+
+        if (price === 0) {
+          try {
+            await fetch('/api/billing/create', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ plan: 'Free', price: 0, test: true })
+            });
+            await fetchMetrics();
+            showToast('Switched to Free Tier');
+          } catch (_) {}
+          return;
+        }
+
+        // Paid Tier: MUST present Shopify-hosted charge approval (Requirement 1.2.1 & 1.2.2)
+        showToast(`Connecting to Shopify Billing for ${plan} ($${price}/mo)...`);
+
+        let idToken = null;
+        try {
+          if (window.shopify && typeof window.shopify.idToken === 'function') {
+            idToken = await window.shopify.idToken();
+          }
+        } catch (e) {
+          console.warn('Could not retrieve idToken:', e);
+        }
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const shop = urlParams.get('shop') || '';
 
         try {
           const res = await fetch('/api/billing/create', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ plan: plan, test: true })
+            headers: {
+              'Content-Type': 'application/json',
+              ...(idToken ? { 'Authorization': `Bearer ${idToken}` } : {})
+            },
+            body: JSON.stringify({ plan: plan, price: price, shop: shop, idToken: idToken, test: true })
           });
           const billData = await res.json();
-          document.getElementById('active-plan-badge').textContent = `${billData.plan} • Active`;
-          showToast(`Plan updated to ${plan}! (Shopify Billing test: true verified)`);
-        } catch (_) {
-          document.getElementById('active-plan-badge').textContent = `${plan} Plan • Active`;
+
+          if (billData.confirmationUrl) {
+            showToast('Redirecting to Shopify charge confirmation...');
+            // Top-level redirection to break out of embedded iframe
+            if (window.shopify && typeof window.shopify.open === 'function') {
+              window.shopify.open(billData.confirmationUrl, '_top');
+            } else {
+              window.top.location.href = billData.confirmationUrl;
+            }
+          } else {
+            showToast('Unable to connect to Shopify Billing. Please try again.');
+          }
+        } catch (err) {
+          showToast('Billing service unreachable');
         }
       });
     });
@@ -1173,6 +1242,15 @@
           showToast('For local testing without a live store, click "Test Live Mascot in Simulator (/demo)"!');
         }
       });
+    }
+
+    // Check if returning from Shopify Billing approval
+    if (urlParams.get('billing') === 'approved') {
+      const approvedPlan = urlParams.get('plan') || 'Growth';
+      const approvedPrice = urlParams.get('price') || '79';
+      showToast(`🎉 Subscription active: ${approvedPlan} ($${approvedPrice}/mo) confirmed by Shopify!`);
+      const cleanUrl = window.location.pathname + (shopParam ? `?shop=${shopParam}` : '');
+      window.history.replaceState({}, document.title, cleanUrl);
     }
 
     fetchMetrics();

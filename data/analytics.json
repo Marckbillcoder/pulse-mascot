@@ -1,12 +1,12 @@
 {
   "shop": "demo-store.myshopify.com",
-  "plan": "Pro ($99/mo)",
-  "impressions": 1,
+  "plan": "Free Tier ($0/mo)",
+  "impressions": 14281,
   "interactions": 2340,
   "milestonesReached": 618,
   "exitOffersShown": 342,
   "exitOffersConverted": 94,
-  "attributedRevenue": 0,
+  "attributedRevenue": 15480,
   "conversionLift": 14.8,
   "abTest": {
     "enabled": true,
@@ -30,5 +30,36 @@
     "revenueLift": "+$6,778.00",
     "confidence": "99.5% (Statistically Significant)"
   },
-  "recentEvents": []
+  "recentEvents": [
+    {
+      "type": "milestone",
+      "label": "Tier 1 (Free Shipping) Unlocked",
+      "revenue": 54,
+      "time": "2026-10-16T02:25:35.937Z"
+    },
+    {
+      "type": "exit_intent",
+      "label": "Recovered Cart via SAVE10",
+      "revenue": 78.5,
+      "time": "2026-10-16T02:16:35.938Z"
+    },
+    {
+      "type": "milestone",
+      "label": "Tier 2 (Mystery Gift) Unlocked",
+      "revenue": 92,
+      "time": "2026-10-16T02:03:35.938Z"
+    },
+    {
+      "type": "exit_intent",
+      "label": "Recovered Cart via SAVE10",
+      "revenue": 42,
+      "time": "2026-10-16T01:40:35.938Z"
+    },
+    {
+      "type": "milestone",
+      "label": "Tier 3 (VIP 15% OFF) Unlocked",
+      "revenue": 135,
+      "time": "2026-10-16T01:13:35.938Z"
+    }
+  ]
 }

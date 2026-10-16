@@ -8,6 +8,18 @@ name = "PulseMascot"
 [webhooks]
 api_version = "2025-01"
 
+  [[webhooks.subscriptions]]
+  compliance_topics = [ "customers/data_request" ]
+  uri = "/api/webhooks/customers/data_request"
+
+  [[webhooks.subscriptions]]
+  compliance_topics = [ "customers/redact" ]
+  uri = "/api/webhooks/customers/redact"
+
+  [[webhooks.subscriptions]]
+  compliance_topics = [ "shop/redact" ]
+  uri = "/api/webhooks/shop/redact"
+
 [access_scopes]
 # Section 1.1.3: Least privilege architecture (0 invasive scopes required)
 scopes = ""
