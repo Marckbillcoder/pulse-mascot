@@ -976,6 +976,16 @@ const server = http.createServer(async (req, res) => {
     }
   }
 
+  // --- Serve Proof of Resolution for Shopify App Store Reviewers ---
+  if (pathname === '/proof-of-resolution' || pathname === '/proof' || pathname === '/proof-of-resolution/') {
+    const proofPath = path.join(PUBLIC_DIR, 'proof-of-resolution.html');
+    if (fs.existsSync(proofPath)) {
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=UTF-8' });
+      fs.createReadStream(proofPath).pipe(res);
+      return;
+    }
+  }
+
   // --- Serve Static Assets ---
   let filePath = path.join(__dirname, pathname);
   if (pathname.startsWith('/public/')) filePath = path.join(__dirname, pathname);
