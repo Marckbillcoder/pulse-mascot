@@ -5,7 +5,10 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "test": "node scripts/verify.js",
+    "test": "node scripts/verify.js && node scripts/comprehensive-compliance-matrix.js",
+    "test:verify": "node scripts/verify.js",
+    "test:matrix": "node scripts/comprehensive-compliance-matrix.js",
+    "test:e2e": "node scripts/e2e-simulation.js",
     "dev": "shopify app dev",
     "deploy": "shopify app deploy",
     "info": "shopify app info"
