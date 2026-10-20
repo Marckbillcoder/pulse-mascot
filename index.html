@@ -1165,6 +1165,14 @@
         if (e.target === checkoutModal) checkoutModal.classList.remove('open');
       });
 
+      // Handle exit-intent discount claimed event from mascot
+      mascot.addEventListener('mascot:exit_intent_converted', (e) => {
+        e.preventDefault();
+        activeCheckoutDiscount = (e.detail && e.detail.code) || 'SAVE10';
+        appendLog('Exit Discount Claimed', `✓ Shopper claimed ${activeCheckoutDiscount}! Opening checkout preview...`);
+        openCheckoutPreview();
+      });
+
       // Button Handlers
       document.getElementById('quick-add-tier1').addEventListener('click', () => {
         const cur = mockCart.total_price / 100;

@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Checkout — PulseMascot Store</title>
+  <link rel="stylesheet" href="https://unpkg.com/@shopify/polaris@13.0.0/build/esm/styles.css" />
+  <style>
+    :root {
+      --bg: #ffffff;
+      --bg-sidebar: #f8fafc;
+      --border: #e2e8f0;
+      --text: #1e293b;
+      --text-muted: #64748b;
+      --primary: #008060;
+      --primary-hover: #006e52;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+
+    .checkout-layout {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      min-height: 100vh;
+    }
+    @media (max-width: 900px) {
+      .checkout-layout { grid-template-columns: 1fr; }
+      .sidebar { order: -1; }
+    }
+
+    /* Main Checkout Column */
+    .main-col {
+      padding: 40px 60px 80px;
+      max-width: 680px;
+      margin-left: auto;
+      width: 100%;
+    }
+    @media (max-width: 650px) {
+      .main-col { padding: 24px 20px 60px; }
+    }
+
+    .store-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    .brand-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #008060, #10b981);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-weight: 800;
+      font-size: 18px;
+    }
+    .brand-title {
+      font-size: 19px;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+    }
+
+    /* Breadcrumbs */
+    .breadcrumbs {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12.5px;
+      color: var(--text-muted);
+      margin-bottom: 24px;
+    }
+    .breadcrumbs span.active {
+      color: var(--text);
+      font-weight: 700;
+    }
+
+    /* Applied Discount Banner */
+    .discount-banner {
+      background: #ecfdf5;
+      border: 1px solid #a7f3d0;
+      border-radius: 10px;
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+      animation: slideDown .25s ease;
+    }
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .discount-banner-text {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13.5px;
+      color: #065f46;
+    }
+
+    /* Express Checkout Buttons */
+    .express-checkout {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 18px;
+      margin-bottom: 28px;
+      text-align: center;
+    }
+    .express-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      margin-bottom: 12px;
+    }
+    .express-btn-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+    .express-btn {
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: #fff;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: background .15s;
+    }
+    .express-btn:hover { background: #f8fafc; }
+    .btn-shop-pay { background: #5a31f4; color: #fff; border-color: #5a31f4; }
+    .btn-shop-pay:hover { background: #4c26d8; }
+
+    .divider {
+      display: flex;
+      align-items: center;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 12px;
+      margin: 20px 0;
+    }
+    .divider::before, .divider::after {
+      content: '';
+      flex: 1;
+      border-bottom: 1px solid var(--border);
+    }
+    .divider::before { margin-right: 12px; }
+    .divider::after { margin-left: 12px; }
+
+    /* Form Section */
+    .section-title {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+    .form-group {
+      margin-bottom: 12px;
+    }
+    .form-label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 5px;
+      color: var(--text);
+    }
+    .form-input {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 14px;
+      outline: none;
+      transition: border-color .15s, box-shadow .15s;
+    }
+    .form-input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 1px var(--primary);
+    }
+    .form-grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .btn-pay {
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      width: 100%;
+      padding: 14px;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 24px;
+      transition: background .15s, transform .1s;
+    }
+    .btn-pay:hover { background: var(--primary-hover); }
+    .btn-pay:active { transform: scale(0.99); }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 18px;
+      color: var(--text-muted);
+      font-size: 13px;
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .back-link:hover { color: var(--primary); }
+
+    /* Right Sidebar (Order Summary) */
+    .sidebar {
+      background: var(--bg-sidebar);
+      border-left: 1px solid var(--border);
+      padding: 40px 50px;
+    }
+    @media (max-width: 650px) {
+      .sidebar { padding: 24px 20px; border-left: none; border-bottom: 1px solid var(--border); }
+    }
+
+    .item-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 13.5px;
+    }
+    .item-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .item-thumbnail {
+      width: 48px;
+      height: 48px;
+      border-radius: 8px;
+      background: #e2e8f0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      position: relative;
+    }
+    .item-qty-badge {
+      position: absolute;
+      top: -6px;
+      right: -6px;
+      background: #64748b;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .item-title { font-weight: 600; color: var(--text); }
+    .item-desc { font-size: 11.5px; color: var(--text-muted); }
+    .item-price { font-weight: 700; color: var(--text); }
+
+    /* Discount Input Box */
+    .discount-box {
+      display: flex;
+      gap: 10px;
+      margin: 20px 0;
+    }
+
+    .discount-tag-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #ecfdf5;
+      color: #065f46;
+      border: 1px solid #a7f3d0;
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-size: 12.5px;
+      font-weight: 700;
+      margin-bottom: 16px;
+    }
+
+    .summary-line {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 0;
+      font-size: 13.5px;
+      color: var(--text-muted);
+    }
+    .summary-total {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      padding-top: 16px;
+      margin-top: 12px;
+      border-top: 1px solid var(--border);
+    }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.55);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    .modal-box {
+      background: #fff;
+      border-radius: 16px;
+      padding: 32px;
+      max-width: 480px;
+      width: 90%;
+      text-align: center;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="checkout-layout">
+
+    <!-- Main Form Column -->
+    <main class="main-col">
+      <div class="store-header">
+        <div class="brand-icon">⚡</div>
+        <div>
+          <div class="brand-title">PulseMascot Store</div>
+          <div style="font-size: 12px; color: var(--text-muted);">Official Shopify Checkout (Test Simulator)</div>
+        </div>
+      </div>
+
+      <!-- Breadcrumbs -->
+      <nav class="breadcrumbs">
+        <span>Cart</span>
+        <span>&rsaquo;</span>
+        <span class="active">Information</span>
+        <span>&rsaquo;</span>
+        <span>Shipping</span>
+        <span>&rsaquo;</span>
+        <span>Payment</span>
+      </nav>
+
+      <!-- Active Discount Success Notification -->
+      <div id="discount-banner" class="discount-banner">
+        <div class="discount-banner-text">
+          <span style="font-size: 18px;">🎉</span>
+          <div>
+            <strong>Discount Successfully Applied!</strong>
+            <div id="discount-banner-detail" style="font-size: 12px; color: #047857;">Code SAVE10 has been applied to your checkout session.</div>
+          </div>
+        </div>
+        <span style="font-size: 11px; font-weight: 700; background: #008060; color: #fff; padding: 3px 8px; border-radius: 6px;">VERIFIED</span>
+      </div>
+
+      <!-- Express Checkout Options -->
+      <div class="express-checkout">
+        <div class="express-title">Express Checkout</div>
+        <div class="express-btn-row">
+          <button type="button" class="express-btn btn-shop-pay">Shop Pay</button>
+          <button type="button" class="express-btn" style="color: #003087;">PayPal</button>
+          <button type="button" class="express-btn">GPay</button>
+        </div>
+      </div>
+
+      <div class="divider">OR CONTINUE TO MANUAL CHECKOUT</div>
+
+      <!-- Contact Info -->
+      <div style="margin-bottom: 24px;">
+        <div class="section-title">Contact Information</div>
+        <div class="form-group">
+          <label class="form-label" for="chk-email">Email or mobile phone number</label>
+          <input class="form-input" type="email" id="chk-email" value="alex.shopper@example.com" />
+        </div>
+      </div>
+
+      <!-- Shipping Address -->
+      <div style="margin-bottom: 24px;">
+        <div class="section-title">Shipping Address</div>
+        <div class="form-grid-2 form-group">
+          <div>
+            <label class="form-label">First name</label>
+            <input class="form-input" type="text" value="Alex" />
+          </div>
+          <div>
+            <label class="form-label">Last name</label>
+            <input class="form-input" type="text" value="Morgan" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Address</label>
+          <input class="form-input" type="text" value="77 King Street West, Suite 400" />
+        </div>
+        <div class="form-grid-2 form-group">
+          <div>
+            <label class="form-label">City</label>
+            <input class="form-input" type="text" value="Toronto" />
+          </div>
+          <div>
+            <label class="form-label">Postal Code</label>
+            <input class="form-input" type="text" value="M5K 1H1" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Shipping Method -->
+      <div style="margin-bottom: 24px;">
+        <div class="section-title">Shipping Method</div>
+        <div style="border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; background: #f8fafc;">
+          <div>
+            <div style="font-weight: 600; font-size: 13.5px;" id="ship-method-title">Standard Tracked Shipping (Free via Milestone)</div>
+            <div style="font-size: 12px; color: var(--text-muted);">2-4 business days</div>
+          </div>
+          <div style="font-weight: 700; color: #008060;" id="ship-cost-display">FREE</div>
+        </div>
+      </div>
+
+      <button type="button" class="btn-pay" id="complete-order-btn">
+        <span>Complete Test Order →</span>
+      </button>
+
+      <div>
+        <a href="/demo" class="back-link">
+          <span>&larr; Return to Storefront Simulator</span>
+        </a>
+      </div>
+    </main>
+
+    <!-- Right Sidebar Column: Order Summary -->
+    <aside class="sidebar">
+      <div style="font-size: 16px; font-weight: 700; margin-bottom: 16px;">Order Summary</div>
+
+      <!-- Line Items -->
+      <div class="item-row">
+        <div class="item-info">
+          <div class="item-thumbnail">
+            👜
+            <span class="item-qty-badge">1</span>
+          </div>
+          <div>
+            <div class="item-title">Organic Cotton Tote</div>
+            <div class="item-desc">Natural Ecru</div>
+          </div>
+        </div>
+        <div class="item-price">$35.00</div>
+      </div>
+
+      <div class="item-row">
+        <div class="item-info">
+          <div class="item-thumbnail">
+            🧴
+            <span class="item-qty-badge">1</span>
+          </div>
+          <div>
+            <div class="item-title">Botanical Facial Mist</div>
+            <div class="item-desc">100ml / Lavender</div>
+          </div>
+        </div>
+        <div class="item-price">$25.00</div>
+      </div>
+
+      <div class="item-row" id="gift-line-item">
+        <div class="item-info">
+          <div class="item-thumbnail" style="background: #fef3c7;">
+            🎁
+            <span class="item-qty-badge" style="background: #d97706;">1</span>
+          </div>
+          <div>
+            <div class="item-title" style="color: #008060;">Mystery Gift 🎁</div>
+            <div class="item-desc" style="color: #059669; font-weight: 600;">Tier 2 Milestone Reward</div>
+          </div>
+        </div>
+        <div class="item-price" style="color: #008060;">FREE ($0.00)</div>
+      </div>
+
+      <!-- Active Discount Tag Pill -->
+      <div style="margin-top: 18px;">
+        <span class="discount-tag-pill" id="discount-pill">
+          <span>🏷️</span>
+          <span id="discount-pill-text">SAVE10 • 10% OFF</span>
+        </span>
+      </div>
+
+      <!-- Totals Breakdown -->
+      <div style="margin-top: 12px; border-top: 1px solid var(--border); padding-top: 12px;">
+        <div class="summary-line">
+          <span>Subtotal</span>
+          <span style="font-weight: 600; color: var(--text);">$60.00</span>
+        </div>
+        <div class="summary-line">
+          <span>Shipping</span>
+          <span style="font-weight: 700; color: #008060;" id="summary-shipping">FREE ($0.00)</span>
+        </div>
+        <div class="summary-line" id="summary-discount-row" style="color: #008060; font-weight: 600;">
+          <span id="summary-discount-label">Discount (SAVE10)</span>
+          <span id="summary-discount-amount">-$6.00</span>
+        </div>
+        <div class="summary-total">
+          <div>
+            <span style="font-size: 15px; font-weight: 700;">Total</span>
+            <span style="font-size: 11px; color: var(--text-muted); display: block;">Including $0.00 in taxes</span>
+          </div>
+          <div style="display: flex; align-items: baseline; gap: 6px;">
+            <span style="font-size: 12px; color: var(--text-muted);">USD</span>
+            <span style="font-size: 26px; font-weight: 800; color: var(--text);" id="summary-total">$54.00</span>
+          </div>
+        </div>
+      </div>
+
+    </aside>
+
+  </div>
+
+  <!-- Order Success Modal -->
+  <div class="modal-overlay" id="success-modal">
+    <div class="modal-box">
+      <div style="font-size: 48px; margin-bottom: 12px;">🎉</div>
+      <h2 style="font-size: 22px; font-weight: 800; margin-bottom: 8px;">Order Confirmed!</h2>
+      <div style="font-size: 13.5px; color: var(--text-muted); margin-bottom: 20px;">
+        Order #PM-10492 has been placed successfully. Your milestone discounts and rewards were redeemed flawlessly!
+      </div>
+      <div style="background: #f8fafc; border: 1px solid var(--border); border-radius: 10px; padding: 14px; margin-bottom: 20px; font-size: 13px; text-align: left;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+          <span style="color: var(--text-muted);">Discount Redeemed:</span>
+          <strong id="modal-discount-code" style="color: #008060;">SAVE10</strong>
+        </div>
+        <div style="display: flex; justify-content: space-between;">
+          <span style="color: var(--text-muted);">Amount Paid:</span>
+          <strong id="modal-amount-paid">$54.00 USD</strong>
+        </div>
+      </div>
+      <a href="/demo" class="btn-pay" style="text-decoration: none; justify-content: center; margin-top: 0;">
+        ← Back to Storefront Simulator
+      </a>
+    </div>
+  </div>
+
+  <script>
+    // Read query parameters & cookies
+    const urlParams = new URLSearchParams(window.location.search);
+    let code = urlParams.get('discount');
+
+    if (!code) {
+      const match = document.cookie.match(/mascot_discount=([^;]+)/);
+      if (match) code = decodeURIComponent(match[1]);
+    }
+    if (!code) code = 'SAVE10';
+    code = code.toUpperCase().trim();
+
+    // Calculate Discounts
+    const subtotal = 60.00;
+    let discountAmount = 0;
+    let discountDesc = '';
+
+    if (code === 'VIP15') {
+      discountAmount = subtotal * 0.15;
+      discountDesc = '15% VIP Perk Unlocked';
+    } else if (code === 'SAVE10') {
+      discountAmount = subtotal * 0.10;
+      discountDesc = '10% Exit Saver Discount';
+    } else if (code === 'FREESHIP') {
+      discountAmount = 0;
+      discountDesc = 'Free Shipping Unlocked';
+    } else {
+      discountAmount = subtotal * 0.10;
+      discountDesc = `${code} Discount Applied`;
+    }
+
+    const shipping = 0.00;
+    const finalTotal = Math.max(0, subtotal - discountAmount + shipping);
+
+    // Hydrate UI
+    document.getElementById('discount-banner-detail').textContent = `Code "${code}" (${discountDesc}) has been applied to your checkout session.`;
+    document.getElementById('discount-pill-text').textContent = `${code} • -${discountAmount > 0 ? '$' + discountAmount.toFixed(2) : 'Free Shipping'}`;
+    document.getElementById('summary-discount-label').textContent = `Discount (${code})`;
+    document.getElementById('summary-discount-amount').textContent = `-$${discountAmount.toFixed(2)}`;
+    document.getElementById('summary-total').textContent = `$${finalTotal.toFixed(2)}`;
+    document.getElementById('modal-discount-code').textContent = code;
+    document.getElementById('modal-amount-paid').textContent = `$${finalTotal.toFixed(2)} USD`;
+
+    // Order Complete handler
+    document.getElementById('complete-order-btn').addEventListener('click', async () => {
+      try {
+        await fetch('/api/telemetry', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ type: 'checkout_completed', code: code, amount: finalTotal })
+        });
+      } catch (_) {}
+      document.getElementById('success-modal').style.display = 'flex';
+    });
+  </script>
+</body>
+</html>

@@ -986,6 +986,50 @@ const server = http.createServer(async (req, res) => {
     }
   }
 
+  // --- Shopify URL Discount API Redirect Simulator (/discount/:code) ---
+  if (pathname.startsWith('/discount/') || pathname === '/discount') {
+    const rawCode = pathname.replace(/^\/discount\/?/i, '').split('/')[0].split('?')[0];
+    const discountCode = decodeURIComponent(rawCode || 'SAVE10').trim() || 'SAVE10';
+    const redirectTarget = (parsed.query && parsed.query.redirect) || '/checkout';
+
+    // If client requested JSON (e.g. AJAX pre-flight / discount check)
+    if (req.headers.accept && req.headers.accept.includes('application/json') && !parsed.query.redirect) {
+      res.writeHead(200, {
+        'Content-Type': 'application/json',
+        'Set-Cookie': `mascot_discount=${encodeURIComponent(discountCode)}; Path=/; Max-Age=86400; SameSite=Lax`
+      });
+      res.end(JSON.stringify({ status: 'ok', discount: discountCode, applied: true }));
+      return;
+    }
+
+    // Standard Shopify 302 Redirection to checkout with applied discount
+    const dest = redirectTarget.startsWith('/') ? redirectTarget : `/${redirectTarget}`;
+    const sep = dest.includes('?') ? '&' : '?';
+    res.writeHead(302, {
+      'Location': `${dest}${sep}discount=${encodeURIComponent(discountCode)}`,
+      'Set-Cookie': `mascot_discount=${encodeURIComponent(discountCode)}; Path=/; Max-Age=86400; SameSite=Lax`
+    });
+    res.end();
+    return;
+  }
+
+  // --- Shopify Checkout Simulator Page (/checkout) ---
+  if (pathname === '/checkout' || pathname === '/checkout/') {
+    const checkoutPath = path.join(PUBLIC_DIR, 'checkout.html');
+    if (fs.existsSync(checkoutPath)) {
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=UTF-8' });
+      fs.createReadStream(checkoutPath).pipe(res);
+      return;
+    }
+  }
+
+  // --- Cart Simulator Redirect (/cart) ---
+  if (pathname === '/cart' || pathname === '/cart/') {
+    res.writeHead(302, { 'Location': '/demo' });
+    res.end();
+    return;
+  }
+
   // --- Serve Static Assets ---
   let filePath = path.join(__dirname, pathname);
   if (pathname.startsWith('/public/')) filePath = path.join(__dirname, pathname);

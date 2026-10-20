@@ -267,6 +267,16 @@ async function runScenarioMatrix() {
     check(widgetCode.includes(`persona-${p}`), '5.1', `Mascot includes SVG and styling for persona: ${p.toUpperCase()}`);
   }
 
+  // 5.1.4: Shopify URL Discount API (/discount/:code) & Checkout Routing
+  const discRes = await req({ path: '/discount/SAVE10?redirect=/checkout', method: 'GET' });
+  check(discRes.status === 302, '5.1', 'GET /discount/SAVE10 responds with HTTP 302 redirection');
+  check((discRes.headers['location'] || '').includes('/checkout?discount=SAVE10'), '5.1', 'Redirects to /checkout?discount=SAVE10');
+  check(JSON.stringify(discRes.headers['set-cookie'] || []).includes('mascot_discount=SAVE10'), '5.1', 'Sets discount cookie on customer session');
+
+  const chkPageRes = await req({ path: '/checkout?discount=SAVE10', method: 'GET' });
+  check(chkPageRes.status === 200, '5.1', 'GET /checkout responds with HTTP 200');
+  check(chkPageRes.body.includes('SAVE10'), '5.1', 'Checkout page displays applied discount code');
+
   // =========================================================================
   // SIMULATION MATRIX: 5 RUNS ACROSS MULTIPLE DIVERSE SHOPPING SCENARIOS
   // =========================================================================

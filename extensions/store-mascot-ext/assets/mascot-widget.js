@@ -1895,7 +1895,7 @@
         this.hideSpeechBubble();
       });
 
-      this._exitCtaBtn.addEventListener('click', () => {
+      this._exitCtaBtn.addEventListener('click', (e) => {
         this._syncCheckoutDiscounts(this.exitDiscountCode);
         this._firePixelEvent('MascotDiscountClaimed', {
           code: this.exitDiscountCode,
@@ -1905,9 +1905,16 @@
         MascotAnalytics.record('exitOffersConverted', 1);
         MascotAnalytics.record('attributedRevenue', this._cartTotalDollars);
         this._sendTelemetry('exit_intent', { code: this.exitDiscountCode, revenue: this._cartTotalDollars });
-        this.dispatchEvent(new CustomEvent('mascot:exit_intent_converted', {
-          detail: { code: this.exitDiscountCode, cartTotal: this._cartTotalDollars }
-        }));
+        const evt = new CustomEvent('mascot:exit_intent_converted', {
+          detail: { code: this.exitDiscountCode, cartTotal: this._cartTotalDollars },
+          bubbles: true,
+          cancelable: true,
+          composed: true,
+        });
+        const notCancelled = this.dispatchEvent(evt);
+        if (!notCancelled) {
+          e.preventDefault();
+        }
       });
 
       this._stageEl.addEventListener('click', () => {

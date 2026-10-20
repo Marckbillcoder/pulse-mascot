@@ -122,6 +122,21 @@ setTimeout(async () => {
     assert((csvRes.headers['content-type'] || '').includes('text/csv'), 'CSV Export header content-type matches text/csv');
     assert(csvRes.body.includes('PulseMascot Attribution'), 'CSV body contains report headers');
 
+    // Check Shopify URL Discount API Redirect Simulator & Checkout Simulator
+    const discountRedirectRes = await makeReq({ hostname: 'localhost', port: 3000, path: '/discount/SAVE10?redirect=/checkout', method: 'GET' });
+    assert(discountRedirectRes.status === 302, 'GET /discount/SAVE10?redirect=/checkout responds with HTTP 302');
+    assert((discountRedirectRes.headers['location'] || '').includes('/checkout?discount=SAVE10'), 'Location header redirects to /checkout?discount=SAVE10');
+    assert(JSON.stringify(discountRedirectRes.headers['set-cookie'] || []).includes('mascot_discount=SAVE10'), 'Set-Cookie contains mascot_discount=SAVE10');
+
+    const discountJsonRes = await makeReq({ hostname: 'localhost', port: 3000, path: '/discount/SAVE10', method: 'GET', headers: { 'Accept': 'application/json' } });
+    assert(discountJsonRes.status === 200, 'GET /discount/SAVE10 (AJAX) responds with HTTP 200');
+    const discountJson = JSON.parse(discountJsonRes.body);
+    assert(discountJson.status === 'ok' && discountJson.discount === 'SAVE10', 'AJAX discount response confirms SAVE10');
+
+    const checkoutRes = await makeReq({ hostname: 'localhost', port: 3000, path: '/checkout?discount=SAVE10', method: 'GET' });
+    assert(checkoutRes.status === 200, 'GET /checkout?discount=SAVE10 responds with HTTP 200');
+    assert(checkoutRes.body.includes('SAVE10'), 'Checkout simulator page reflects SAVE10 discount applied');
+
     // Check Shopify Billing API Compliance & Free Trial Protection (Section 1.2.1, 1.2.2 & 1.2.3)
     const billingRes = await makeReq({
       hostname: 'localhost',
