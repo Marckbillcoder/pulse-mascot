@@ -1026,8 +1026,9 @@
               <div>
                 <strong>Merchant Note:</strong> Ensure discount codes <code>FREESHIP</code>, <code>FREEGIFT</code>, <code>VIP15</code>, and <code>SAVE10</code> are created in your Shopify Admin discounts.
               </div>
-              <a href="https://admin.shopify.com/store/demo-store/discounts" target="_blank" rel="noopener noreferrer" class="btn-primary" style="font-size: 12px; padding: 6px 14px; text-decoration: none;">
-                ⚡ Open Shopify Admin Discounts →
+              <a id="shopify-discounts-link" href="javascript:void(0)" class="btn-primary" style="font-size: 12px; padding: 6px 14px; text-decoration: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                <span>⚡ Open Shopify Admin Discounts</span>
+                <span>→</span>
               </a>
             </div>
           </div>
@@ -1426,6 +1427,61 @@
 
       <div style="margin-top: 14px; text-align: center; font-size: 11.5px; color: var(--p-text-subdued);">
         🔒 Official Shopify Billing Protocol &bull; Test Store Sandbox Mode
+      </div>
+    </div>
+  </div>
+
+  <!-- Shopify Discounts Guidance Modal (Eliminates 500 when not in live store) -->
+  <div id="discounts-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(3px);">
+    <div style="background: #ffffff; border-radius: 16px; max-width: 520px; width: 90%; padding: 26px 28px; box-shadow: 0 20px 40px rgba(0,0,0,0.18); border: 1px solid var(--p-border);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div style="width: 34px; height: 34px; border-radius: 8px; background: #6366f1; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 17px;">🎁</div>
+          <h3 style="font-size: 18px; font-weight: 800; color: var(--p-text); margin: 0;">Shopify Discounts Setup</h3>
+        </div>
+        <button type="button" id="close-discounts-modal-btn" style="background: none; border: none; font-size: 22px; cursor: pointer; color: var(--p-text-subdued); line-height: 1;">&times;</button>
+      </div>
+
+      <p style="font-size: 13px; color: var(--p-text-subdued); margin-bottom: 14px; line-height: 1.5;">
+        When shoppers reach gamified cart milestones, PulseMascot auto-applies discount codes to Shopify Checkout. Make sure these codes exist in your <strong>Shopify Admin &gt; Discounts</strong>:
+      </p>
+
+      <div style="background: #f8fafc; border: 1px solid var(--p-border); border-radius: 10px; padding: 12px; margin-bottom: 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+        <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px;">
+          <div style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase;">Tier 1 Milestone</div>
+          <code style="font-size: 14px; font-weight: 800; color: #008060;">FREESHIP</code>
+          <div style="font-size: 11px; color: #64748b; margin-top: 2px;">Free Shipping</div>
+        </div>
+        <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px;">
+          <div style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase;">Tier 2 Milestone</div>
+          <code style="font-size: 14px; font-weight: 800; color: #6366f1;">FREEGIFT</code>
+          <div style="font-size: 11px; color: #64748b; margin-top: 2px;">Free Gift / Sample</div>
+        </div>
+        <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px;">
+          <div style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase;">Tier 3 Milestone</div>
+          <code style="font-size: 14px; font-weight: 800; color: #d97706;">VIP15</code>
+          <div style="font-size: 11px; color: #64748b; margin-top: 2px;">15% Off Entire Cart</div>
+        </div>
+        <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px;">
+          <div style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase;">Exit-Intent Booster</div>
+          <code style="font-size: 14px; font-weight: 800; color: #ef4444;">SAVE10</code>
+          <div style="font-size: 11px; color: #64748b; margin-top: 2px;">10% Off Instant</div>
+        </div>
+      </div>
+
+      <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 12px 14px; font-size: 12.5px; color: #1e40af; margin-bottom: 18px;">
+        <div><strong>Open Live Store Discounts:</strong> Enter your myshopify store domain:</div>
+        <div style="display: flex; gap: 8px; margin-top: 8px;">
+          <input type="text" id="custom-shop-input" placeholder="my-store.myshopify.com" style="flex: 1; padding: 7px 10px; font-size: 13px; border: 1px solid #bfdbfe; border-radius: 6px; outline: none; background: #fff; color: #1e293b;">
+          <button type="button" class="btn-primary" id="open-custom-store-discounts-btn" style="padding: 7px 12px; font-size: 12px; white-space: nowrap;">Open Admin →</button>
+        </div>
+      </div>
+
+      <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+        <a href="/checkout?discount=SAVE10" target="_blank" class="btn-secondary" style="font-size: 12px; text-decoration: none; padding: 8px 14px;">
+          🛒 Test in Checkout Simulator
+        </a>
+        <button type="button" class="btn-primary" id="dismiss-discounts-modal-btn" style="padding: 8px 18px;">Got It</button>
       </div>
     </div>
   </div>
@@ -1921,24 +1977,83 @@
       btn.textContent = '🪄 Generate Persuasive Copy';
     });
 
-    // Dynamic Theme Editor Deep Link Handler
+    // Dynamic Theme Editor & Discounts Deep Links
     const urlParams = new URLSearchParams(window.location.search);
     const shopParam = urlParams.get('shop');
     const themeEditorLink = document.getElementById('theme-editor-link');
+    const shopifyDiscountsLink = document.getElementById('shopify-discounts-link');
+    const discountsModal = document.getElementById('discounts-modal');
+    const isLiveShop = shopParam && shopParam.includes('.myshopify.com') && !shopParam.startsWith('demo-store');
 
-    if (shopParam && shopParam.includes('.myshopify.com') && !shopParam.startsWith('demo-store')) {
+    if (isLiveShop) {
       const storeSlug = shopParam.replace('.myshopify.com', '');
-      themeEditorLink.href = `https://admin.shopify.com/store/${storeSlug}/themes/current/editor?context=apps`;
-      themeEditorLink.target = '_blank';
+      if (themeEditorLink) {
+        themeEditorLink.href = `https://admin.shopify.com/store/${storeSlug}/themes/current/editor?context=apps`;
+        themeEditorLink.target = '_blank';
+      }
+      if (shopifyDiscountsLink) {
+        shopifyDiscountsLink.href = `https://admin.shopify.com/store/${storeSlug}/discounts`;
+        shopifyDiscountsLink.target = '_blank';
+      }
     } else {
-      themeEditorLink.addEventListener('click', (e) => {
-        e.preventDefault();
-        const customShop = prompt('Enter your live Shopify store domain (e.g. my-store.myshopify.com):');
-        if (customShop && customShop.trim()) {
-          const cleanSlug = customShop.trim().replace(/^https?:\/\//, '').replace('.myshopify.com', '').split('/')[0];
-          window.open(`https://admin.shopify.com/store/${cleanSlug}/themes/current/editor?context=apps`, '_blank');
+      if (themeEditorLink) {
+        themeEditorLink.addEventListener('click', (e) => {
+          e.preventDefault();
+          const customShop = prompt('Enter your live Shopify store domain (e.g. my-store.myshopify.com):');
+          if (customShop && customShop.trim()) {
+            const cleanSlug = customShop.trim().replace(/^https?:\/\//, '').replace('.myshopify.com', '').split('/')[0];
+            window.open(`https://admin.shopify.com/store/${cleanSlug}/themes/current/editor?context=apps`, '_blank');
+          } else {
+            showToast('For local testing without a live store, click "Test Live Mascot in Simulator (/demo)"!');
+          }
+        });
+      }
+
+      if (shopifyDiscountsLink) {
+        shopifyDiscountsLink.addEventListener('click', (e) => {
+          e.preventDefault();
+          if (discountsModal) discountsModal.style.display = 'flex';
+        });
+      }
+    }
+
+    // Discounts Modal Actions
+    const closeDiscountsModalBtn = document.getElementById('close-discounts-modal-btn');
+    const dismissDiscountsModalBtn = document.getElementById('dismiss-discounts-modal-btn');
+    const openCustomStoreDiscountsBtn = document.getElementById('open-custom-store-discounts-btn');
+    const customShopInput = document.getElementById('custom-shop-input');
+
+    if (closeDiscountsModalBtn) {
+      closeDiscountsModalBtn.addEventListener('click', () => {
+        if (discountsModal) discountsModal.style.display = 'none';
+      });
+    }
+    if (dismissDiscountsModalBtn) {
+      dismissDiscountsModalBtn.addEventListener('click', () => {
+        if (discountsModal) discountsModal.style.display = 'none';
+      });
+    }
+    if (discountsModal) {
+      discountsModal.addEventListener('click', (e) => {
+        if (e.target === discountsModal) discountsModal.style.display = 'none';
+      });
+    }
+    if (openCustomStoreDiscountsBtn && customShopInput) {
+      const handleOpenCustomDiscounts = () => {
+        const val = customShopInput.value.trim();
+        if (val) {
+          const cleanSlug = val.replace(/^https?:\/\//, '').replace('.myshopify.com', '').split('/')[0];
+          window.open(`https://admin.shopify.com/store/${cleanSlug}/discounts`, '_blank');
+          if (discountsModal) discountsModal.style.display = 'none';
         } else {
-          showToast('For local testing without a live store, click "Test Live Mascot in Simulator (/demo)"!');
+          showToast('Please enter your store domain (e.g. my-store.myshopify.com)');
+        }
+      };
+      openCustomStoreDiscountsBtn.addEventListener('click', handleOpenCustomDiscounts);
+      customShopInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          handleOpenCustomDiscounts();
         }
       });
     }
