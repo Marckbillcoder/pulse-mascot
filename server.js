@@ -574,6 +574,12 @@ const server = http.createServer(async (req, res) => {
     data.billingStatus = 'active';
     writeJsonFile(DATA_FILE, data);
 
+    if (req.headers.accept && req.headers.accept.includes('application/json')) {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ status: 'ok', plan: data.plan, billing: 'approved' }));
+      return;
+    }
+
     const redirectPath = `/admin?shop=${encodeURIComponent(shop)}&billing=approved&plan=${encodeURIComponent(plan)}&price=${encodeURIComponent(price)}`;
     res.writeHead(302, { 'Location': redirectPath });
     res.end();
