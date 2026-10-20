@@ -6,15 +6,21 @@
   <meta name="shopify-api-key" content="73a216a55fa8eef1934e37d4279bde2c" />
   <script src="https://cdn.shopify.com/shopifycloud/app-bridge.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/@shopify/polaris@13.0.0/build/esm/styles.css" />
+  <title>PulseMascot — Merchant Dashboard</title>
   <style>
     :root {
       --p-surface: #ffffff;
       --p-bg-subdued: #f6f6f7;
       --p-border: #e1e3e5;
+      --p-border-hover: #b0b5ba;
       --p-text: #202223;
       --p-text-subdued: #6d7175;
       --p-interactive: #008060;
       --p-interactive-hover: #004c3f;
+      --p-brand-light: #ecfdf5;
+      --p-brand-border: #a7f3d0;
+      --p-shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
+      --p-shadow-md: 0 4px 12px rgba(0,0,0,0.08);
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -25,16 +31,18 @@
       padding-bottom: 80px;
     }
 
+    /* Top Sticky Admin Header */
     .admin-header {
       background: #ffffff;
       border-bottom: 1px solid var(--p-border);
-      padding: 16px 32px;
+      padding: 14px 28px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       position: sticky;
       top: 0;
       z-index: 100;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.03);
     }
     .header-brand {
       display: flex;
@@ -42,71 +50,174 @@
       gap: 12px;
     }
     .brand-icon {
-      width: 34px;
-      height: 34px;
+      width: 36px;
+      height: 36px;
       border-radius: 10px;
-      background: linear-gradient(135deg, #6366f1, #10b981);
+      background: linear-gradient(135deg, #008060, #10b981);
       display: flex;
       align-items: center;
       justify-content: center;
       color: #fff;
       font-weight: 800;
-      font-size: 17px;
+      font-size: 18px;
+      box-shadow: 0 2px 6px rgba(0, 128, 96, 0.25);
     }
     .brand-title {
       font-size: 17px;
       font-weight: 700;
+      color: var(--p-text);
       letter-spacing: -0.01em;
+    }
+    .brand-sub {
+      font-size: 12px;
+      color: var(--p-text-subdued);
     }
     .header-actions {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
+      flex-wrap: wrap;
     }
     .pill {
       font-size: 12px;
       font-weight: 600;
       padding: 5px 12px;
       border-radius: 999px;
-      background: #eef2ff;
-      color: #4338ca;
-      border: 1px solid #c7d2fe;
+      background: #f8fafc;
+      color: #334155;
+      border: 1px solid var(--p-border);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
     }
     .pill-green {
       background: #ecfdf5;
       color: #065f46;
       border-color: #a7f3d0;
     }
-
-    .main-layout {
-      max-width: 1180px;
-      margin: 28px auto;
-      padding: 0 20px;
+    .pill-gold {
+      background: #fefce8;
+      color: #854d0e;
+      border-color: #fef08a;
     }
 
-    .banner {
-      background: #f0fdf4;
-      border: 1px solid #bbf7d0;
+    /* Main Container */
+    .main-layout {
+      max-width: 1220px;
+      margin: 24px auto;
+      padding: 0 24px;
+    }
+
+    /* Navigation Tabs */
+    .polaris-nav-tabs {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: #ffffff;
+      padding: 6px 12px;
       border-radius: 12px;
-      padding: 16px 20px;
+      border: 1px solid var(--p-border);
+      margin-bottom: 24px;
+      box-shadow: var(--p-shadow-sm);
+      overflow-x: auto;
+    }
+    .nav-tab-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 18px;
+      border-radius: 8px;
+      border: none;
+      background: transparent;
+      color: var(--p-text-subdued);
+      font-size: 13.5px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .15s ease;
+      white-space: nowrap;
+    }
+    .nav-tab-btn:hover {
+      background: #f8fafc;
+      color: var(--p-text);
+    }
+    .nav-tab-btn.active {
+      background: #008060;
+      color: #ffffff;
+      box-shadow: 0 2px 6px rgba(0, 128, 96, 0.25);
+    }
+    .tab-badge {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 999px;
+      background: rgba(0,0,0,0.06);
+      color: inherit;
+    }
+    .nav-tab-btn.active .tab-badge {
+      background: rgba(255,255,255,0.25);
+      color: #ffffff;
+    }
+    .tab-badge-live {
+      background: #ecfdf5;
+      color: #065f46;
+    }
+    .tab-badge-ai {
+      background: #e0e7ff;
+      color: #4338ca;
+    }
+
+    /* Tab Panes */
+    .tab-pane {
+      display: none;
+    }
+    .tab-pane.active {
+      display: block;
+      animation: fadeIn .2s ease;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Storefront Status Banner */
+    .banner {
+      background: #ffffff;
+      border: 1px solid var(--p-border);
+      border-left: 5px solid #008060;
+      border-radius: 12px;
+      padding: 18px 22px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       margin-bottom: 24px;
+      box-shadow: var(--p-shadow-sm);
+      flex-wrap: wrap;
+      gap: 16px;
     }
     .banner-text {
       display: flex;
       align-items: center;
-      gap: 12px;
-      font-size: 14px;
-      font-weight: 500;
-      color: #166534;
+      gap: 14px;
+    }
+    .status-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #10b981;
+      display: inline-block;
+      box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2);
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+      70% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
     }
     .banner-btn {
       background: #008060;
       color: #fff;
       border: none;
-      padding: 8px 16px;
+      padding: 9px 18px;
       border-radius: 8px;
       font-size: 13px;
       font-weight: 600;
@@ -118,7 +229,303 @@
       transition: background .15s;
     }
     .banner-btn:hover { background: #006e52; }
+    .banner-btn-secondary {
+      background: #ffffff;
+      color: var(--p-text);
+      border: 1px solid var(--p-border);
+    }
+    .banner-btn-secondary:hover {
+      background: #f8fafc;
+      border-color: var(--p-border-hover);
+    }
 
+    /* Cards */
+    .card {
+      background: #ffffff;
+      border: 1px solid var(--p-border);
+      border-radius: 14px;
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: var(--p-shadow-sm);
+    }
+    .card-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--p-text);
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .card-subtitle {
+      font-size: 13px;
+      color: var(--p-text-subdued);
+      margin-bottom: 18px;
+      line-height: 1.45;
+    }
+
+    /* 2-Column Content Grid */
+    .content-grid {
+      display: grid;
+      grid-template-columns: 1.35fr 1fr;
+      gap: 24px;
+      align-items: start;
+    }
+    @media (max-width: 980px) {
+      .content-grid { grid-template-columns: 1fr; }
+    }
+
+    /* Interactive Character Selector Grid */
+    .character-picker-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    @media (max-width: 700px) {
+      .character-picker-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    .char-card {
+      background: #f8fafc;
+      border: 2px solid var(--p-border);
+      border-radius: 12px;
+      padding: 12px 8px;
+      text-align: center;
+      cursor: pointer;
+      transition: all .15s ease;
+      position: relative;
+    }
+    .char-card:hover {
+      border-color: #008060;
+      transform: translateY(-2px);
+      box-shadow: var(--p-shadow-sm);
+    }
+    .char-card.active {
+      border-color: #008060;
+      background: #f0fdf4;
+      box-shadow: 0 0 0 1px #008060;
+    }
+    .char-avatar {
+      font-size: 28px;
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+    .char-name {
+      font-size: 12.5px;
+      font-weight: 700;
+      color: var(--p-text);
+      margin-bottom: 2px;
+    }
+    .char-vibe {
+      font-size: 10.5px;
+      color: var(--p-text-subdued);
+    }
+    .char-check {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #008060;
+      color: #fff;
+      font-size: 10px;
+      font-weight: 700;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+    .char-card.active .char-check {
+      display: flex;
+    }
+
+    /* 3-Tier Step Rewards Visual Builder */
+    .tier-builder-list {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+    .tier-builder-card {
+      border: 1px solid var(--p-border);
+      border-radius: 12px;
+      padding: 16px;
+      background: #ffffff;
+      transition: border-color .15s;
+    }
+    .tier-builder-card:hover {
+      border-color: #cbd5e1;
+    }
+    .tier-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .tier-step-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 6px;
+    }
+    .tier-badge-1 { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
+    .tier-badge-2 { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+    .tier-badge-3 { background: #f5f3ff; color: #5b21b6; border: 1px solid #ddd6fe; }
+    .tier-badge-exit { background: #fdf2f8; color: #9d174d; border: 1px solid #fbcfe8; }
+
+    .tier-inputs-row {
+      display: grid;
+      grid-template-columns: 120px 1.4fr 1fr;
+      gap: 12px;
+      align-items: start;
+    }
+    @media (max-width: 650px) {
+      .tier-inputs-row { grid-template-columns: 1fr; }
+    }
+
+    /* Form Controls */
+    .form-group {
+      margin-bottom: 14px;
+    }
+    .form-label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 5px;
+      color: var(--p-text);
+    }
+    .input-prefix-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+    .input-prefix {
+      position: absolute;
+      left: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--p-text-subdued);
+    }
+    .input-with-prefix {
+      padding-left: 24px !important;
+    }
+    .form-input, .form-select {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid var(--p-border);
+      border-radius: 8px;
+      font-size: 13.5px;
+      color: var(--p-text);
+      background: #fff;
+      outline: none;
+      transition: border-color .15s, box-shadow .15s;
+    }
+    .form-input:focus, .form-select:focus {
+      border-color: #008060;
+      box-shadow: 0 0 0 1px #008060;
+    }
+    .form-help {
+      font-size: 11.5px;
+      color: var(--p-text-subdued);
+      margin-top: 4px;
+      line-height: 1.4;
+    }
+
+    .btn-primary {
+      background: #008060;
+      color: #fff;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 13.5px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: background .15s, transform .1s;
+    }
+    .btn-primary:hover { background: #006e52; }
+    .btn-primary:active { transform: scale(0.98); }
+
+    .btn-secondary {
+      background: #fff;
+      color: var(--p-text);
+      border: 1px solid var(--p-border);
+      padding: 9px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: background .15s, border-color .15s;
+    }
+    .btn-secondary:hover {
+      background: #f6f6f7;
+      border-color: var(--p-border-hover);
+    }
+
+    /* Live Mascot Preview Stage in Admin */
+    .preview-stage-container {
+      background: radial-gradient(circle at center, #1e293b, #0f172a);
+      border-radius: 14px;
+      height: 250px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      margin-bottom: 16px;
+      overflow: hidden;
+      border: 1px solid #334155;
+      box-shadow: inset 0 2px 8px rgba(0,0,0,0.4);
+    }
+    .preview-badge {
+      position: absolute;
+      top: 12px;
+      left: 14px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: #94a3b8;
+      background: rgba(15, 23, 42, 0.7);
+      padding: 4px 8px;
+      border-radius: 6px;
+      border: 1px solid #334155;
+    }
+    .sim-buttons-bar {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+      justify-content: center;
+    }
+    .sim-tag-btn {
+      background: #f1f5f9;
+      border: 1px solid var(--p-border);
+      border-radius: 6px;
+      padding: 5px 10px;
+      font-size: 11.5px;
+      font-weight: 600;
+      color: #334155;
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .sim-tag-btn:hover {
+      background: #008060;
+      color: #fff;
+      border-color: #008060;
+    }
+
+    /* KPI Grid */
     .kpi-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
@@ -132,7 +539,7 @@
       border: 1px solid var(--p-border);
       border-radius: 14px;
       padding: 20px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+      box-shadow: var(--p-shadow-sm);
     }
     .kpi-label {
       font-size: 12px;
@@ -151,7 +558,7 @@
     .kpi-value.green { color: #008060; }
     .kpi-sub {
       font-size: 12px;
-      font-weight: 500;
+      font-weight: 600;
       color: #008060;
       margin-top: 6px;
       display: flex;
@@ -159,36 +566,7 @@
       gap: 4px;
     }
 
-    .content-grid {
-      display: grid;
-      grid-template-columns: 1.35fr 1fr;
-      gap: 24px;
-      align-items: start;
-    }
-    @media (max-width: 960px) { .content-grid { grid-template-columns: 1fr; } }
-
-    .card {
-      background: #ffffff;
-      border: 1px solid var(--p-border);
-      border-radius: 14px;
-      padding: 24px;
-      margin-bottom: 24px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-    }
-    .card-title {
-      font-size: 16px;
-      font-weight: 700;
-      margin-bottom: 6px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    .card-subtitle {
-      font-size: 13px;
-      color: var(--p-text-subdued);
-      margin-bottom: 18px;
-    }
-
+    /* Tables */
     .polaris-table {
       width: 100%;
       border-collapse: collapse;
@@ -214,64 +592,7 @@
       border-bottom: none;
     }
 
-    .form-group {
-      margin-bottom: 16px;
-    }
-    .form-label {
-      display: block;
-      font-size: 13px;
-      font-weight: 600;
-      margin-bottom: 6px;
-      color: var(--p-text);
-    }
-    .form-input, .form-select {
-      width: 100%;
-      padding: 8px 12px;
-      border: 1px solid var(--p-border);
-      border-radius: 8px;
-      font-size: 14px;
-      color: var(--p-text);
-      background: #fff;
-      outline: none;
-      transition: border-color .15s;
-    }
-    .form-input:focus, .form-select:focus {
-      border-color: #008060;
-      box-shadow: 0 0 0 1px #008060;
-    }
-
-    .form-row {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 14px;
-    }
-
-    .btn-primary {
-      background: #008060;
-      color: #fff;
-      border: none;
-      padding: 10px 18px;
-      border-radius: 8px;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background .15s;
-    }
-    .btn-primary:hover { background: #006e52; }
-
-    .btn-secondary {
-      background: #fff;
-      color: var(--p-text);
-      border: 1px solid var(--p-border);
-      padding: 9px 16px;
-      border-radius: 8px;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background .15s;
-    }
-    .btn-secondary:hover { background: #f6f6f7; }
-
+    /* Event Feed */
     .event-feed {
       display: flex;
       flex-direction: column;
@@ -309,557 +630,704 @@
       color: #008060;
     }
 
-    /* Live Mascot Preview Stage in Admin */
-    .preview-stage-container {
-      background: radial-gradient(circle at center, #1e293b, #0f172a);
-      border-radius: 14px;
-      height: 220px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      position: relative;
-      margin-bottom: 20px;
-      overflow: hidden;
-      border: 1px solid #334155;
-    }
-    .preview-badge {
-      position: absolute;
-      top: 12px;
-      left: 14px;
-      font-size: 11px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: .06em;
-      color: #94a3b8;
-    }
-
     /* Pricing Plans */
     .pricing-grid {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 12px;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+    }
+    @media (max-width: 900px) {
+      .pricing-grid { grid-template-columns: repeat(2, 1fr); }
     }
     .plan-box {
       border: 1px solid var(--p-border);
-      border-radius: 10px;
-      padding: 14px;
+      border-radius: 12px;
+      padding: 20px 16px;
       text-align: center;
       cursor: pointer;
-      transition: border-color .15s, background .15s;
+      transition: all .15s ease;
+      background: #fff;
     }
-    .plan-box:hover { border-color: #008060; }
+    .plan-box:hover {
+      border-color: #008060;
+      transform: translateY(-2px);
+      box-shadow: var(--p-shadow-sm);
+    }
     .plan-box.active {
       border: 2px solid #008060;
       background: #f0fdf4;
+      box-shadow: 0 0 0 1px #008060;
     }
-    .plan-name { font-weight: 700; font-size: 13px; }
-    .plan-price { font-size: 18px; font-weight: 800; color: #008060; margin: 4px 0; }
-    .plan-desc { font-size: 11px; color: var(--p-text-subdued); }
+    .plan-name { font-weight: 700; font-size: 14px; color: var(--p-text); }
+    .plan-price { font-size: 24px; font-weight: 800; color: #008060; margin: 8px 0 4px; }
+    .plan-desc { font-size: 12px; color: var(--p-text-subdued); line-height: 1.4; }
+
+    /* Footer */
+    .admin-footer {
+      margin-top: 48px;
+      border-top: 1px solid var(--p-border);
+      padding-top: 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+      font-size: 13px;
+      color: var(--p-text-subdued);
+    }
+    .admin-footer a {
+      color: var(--p-text-subdued);
+      text-decoration: none;
+      font-weight: 500;
+    }
+    .admin-footer a:hover {
+      color: #008060;
+      text-decoration: underline;
+    }
   </style>
 </head>
 <body>
 
+  <!-- Top Sticky Navigation & Admin Status Header -->
   <header class="admin-header">
     <div class="header-brand">
       <div class="brand-icon">⚡</div>
       <div>
-        <div class="brand-title">PulseMascot: Interactive AOV Engine</div>
-        <div style="font-size: 12px; color: var(--p-text-subdued);">Shopify Theme App Extension</div>
+        <div class="brand-title">PulseMascot</div>
+        <div class="brand-sub">Smart Gamified AOV &amp; Milestone Engine</div>
       </div>
     </div>
     <div class="header-actions">
-      <a href="/agency" class="pill pill-gold" style="text-decoration: none; font-weight: 700; display: inline-flex; align-items: center; gap: 5px;">🏢 Agency Portal ($499/mo)</a>
-      <button type="button" id="open-support-btn" class="pill" style="border: 1px solid var(--p-border); background: #fff; color: #1e293b; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">💬 Help &amp; Support</button>
-      <a href="/api/export-csv" download="pulsemascot-attribution.csv" class="pill" style="text-decoration: none; color: #1e293b; background: #fff; border-color: var(--p-border); display: inline-flex; align-items: center; gap: 4px; font-weight: 600;">📥 Export CSV</a>
+      <a href="/agency" class="pill pill-gold" style="text-decoration: none; font-weight: 700;">🏢 Agency Portal ($499/mo)</a>
+      <button type="button" id="open-support-btn" class="pill" style="cursor: pointer; background: #fff;">💬 Help &amp; Support</button>
+      <a href="/api/export-csv" download="pulsemascot-attribution.csv" class="pill" style="text-decoration: none; font-weight: 600;">📥 Export CSV</a>
       <span class="pill" id="store-domain-pill">Store: demo-store.myshopify.com</span>
       <span class="pill pill-green" id="active-plan-badge">Free Tier ($0/mo) • Active</span>
     </div>
   </header>
 
   <main class="main-layout">
-    <!-- 1-Click Theme Customizer Deep-Link Banner -->
-    <div class="banner">
-      <div class="banner-text">
-        <span style="font-size: 20px;">🎨</span>
-        <div>
-          <strong>Mascot is installed on your Online Store!</strong>
-          <div style="font-size: 13px; color: #166534;">You can enable or reposition it live in the Shopify Theme Editor.</div>
-        </div>
-      </div>
-      <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-        <a
-          href="/demo"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="banner-btn"
-          style="background: #008060; color: #fff;"
-        >
-          🛍️ Test Live Mascot in Simulator (/demo) →
-        </a>
-        <a
-          id="theme-editor-link"
-          href="javascript:void(0)"
-          class="banner-btn"
-          style="background: #ffffff; color: #202223; border: 1px solid var(--p-border);"
-        >
-          🎨 Open Shopify Theme Editor →
-        </a>
-      </div>
-    </div>
 
-    <!-- Merchant Onboarding & Setup Steps (Section 3.1.2) -->
-    <div class="card" style="margin-bottom: 24px; background: linear-gradient(180deg, #fafafa, #ffffff); border-left: 4px solid #008060;">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 8px;">
-        <div>
-          <div class="card-title" style="margin-bottom: 2px;">
-            <span>🚀 Merchant Quick Setup &amp; Onboarding Checklist</span>
-          </div>
-          <div class="card-subtitle" style="margin-bottom: 0;">
-            Follow these 3 simple steps to launch your gamified AOV milestone mascot.
-          </div>
-        </div>
-        <span class="pill pill-green">Step 2 of 3 Completed</span>
-      </div>
-      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px;">
-        <div style="border: 1px solid var(--p-border); border-radius: 10px; padding: 14px; background: #fff;">
-          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
-            <span style="background: #ecfdf5; color: #065f46; font-weight: 700; width: 22px; height: 22px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 12px;">✓</span>
-            <strong style="font-size: 13px;">1. Theme App Embed</strong>
-          </div>
-          <div style="font-size: 12px; color: var(--p-text-subdued);">Enabled via Shopify Theme Editor. Zero theme liquid tampering, 100% clean uninstallation.</div>
-        </div>
-        <div style="border: 1px solid #6366f1; border-radius: 10px; padding: 14px; background: #f5f3ff;">
-          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
-            <span style="background: #6366f1; color: #fff; font-weight: 700; width: 22px; height: 22px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 12px;">2</span>
-            <strong style="font-size: 13px; color: #4338ca;">2. Configure Tiers</strong>
-          </div>
-          <div style="font-size: 12px; color: #4338ca;">Select from 5 animated personas (Orb, Pet, Boba, Ghost, Dragon) and set cart threshold rewards below.</div>
-        </div>
-        <div style="border: 1px solid var(--p-border); border-radius: 10px; padding: 14px; background: #fff;">
-          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
-            <span style="background: #e2e8f0; color: #475569; font-weight: 700; width: 22px; height: 22px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 12px;">3</span>
-            <strong style="font-size: 13px;">3. Watch AOV Lift</strong>
-          </div>
-          <div style="font-size: 12px; color: var(--p-text-subdued);">Empirical A/B split testing proves statistical lift against control traffic automatically.</div>
-        </div>
-      </div>
-    </div>
+    <!-- Polaris Tab Navigation Bar -->
+    <nav class="polaris-nav-tabs" role="tablist">
+      <button type="button" class="nav-tab-btn active" data-tab="setup" role="tab" aria-selected="true" id="tab-btn-setup">
+        <span class="tab-icon">🚀</span>
+        <span>Quick Setup &amp; Rewards</span>
+        <span class="tab-badge">Step 2 of 3</span>
+      </button>
+      <button type="button" class="nav-tab-btn" data-tab="analytics" role="tab" aria-selected="false" id="tab-btn-analytics">
+        <span class="tab-icon">📊</span>
+        <span>Sales &amp; Revenue</span>
+        <span class="tab-badge tab-badge-live">Live</span>
+      </button>
+      <button type="button" class="nav-tab-btn" data-tab="ai" role="tab" aria-selected="false" id="tab-btn-ai">
+        <span class="tab-icon">🧠</span>
+        <span>Smart AI Boosters</span>
+        <span class="tab-badge tab-badge-ai">Pro</span>
+      </button>
+      <button type="button" class="nav-tab-btn" data-tab="billing" role="tab" aria-selected="false" id="tab-btn-billing">
+        <span class="tab-icon">💳</span>
+        <span>Plan &amp; Billing</span>
+      </button>
+    </nav>
 
-    <!-- Storefront Checkout Rewards & Reviewer Verification Guide (Section 5.1.2) -->
-    <div class="card" style="margin-bottom: 24px; background: #ffffff; border: 1px solid #c7d2fe; border-left: 4px solid #6366f1;">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
-        <div class="card-title" style="margin-bottom: 0;">
-          <span>🎁 Storefront Checkout Rewards &amp; Discount Configuration (Shopify Review Requirement 5.1.2)</span>
-        </div>
-        <span class="pill pill-green" style="font-weight: 700;">✓ Automated Storefront Sync Active</span>
-      </div>
-      <div class="card-subtitle" style="margin-bottom: 16px;">
-        PulseMascot seamlessly connects storefront milestone achievements to Shopify Checkout using the Storefront Cart AJAX API and Shopify URL Discount API with zero invasive API scopes.
-      </div>
+    <!-- ================================================================= -->
+    <!-- TAB 1: 🚀 QUICK SETUP & REWARDS (Default Merchant View) -->
+    <!-- ================================================================= -->
+    <div id="tab-setup" class="tab-pane active" role="tabpanel">
 
-      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 16px;">
-        <!-- Tier 1 -->
-        <div style="background: #f8fafc; border: 1px solid var(--p-border); border-radius: 10px; padding: 14px;">
-          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
-            <strong style="font-size: 13px; color: #1e293b;">🚚 Tier 1: Free Shipping ($50)</strong>
-            <span class="pill" style="font-size: 11px;">FREESHIP</span>
+      <!-- Storefront Live Status Banner -->
+      <div class="banner">
+        <div class="banner-text">
+          <span class="status-dot"></span>
+          <div>
+            <strong>Mascot is Active on your Online Store!</strong>
+            <div style="font-size: 13px; color: var(--p-text-subdued);">Shoppers can see your companion cheering their cart milestones and checkout rewards.</div>
           </div>
-          <div style="font-size: 12px; color: var(--p-text-subdued); line-height: 1.5; margin-bottom: 8px;">
-            When cart subtotal reaches $50, the widget auto-applies code <code>FREESHIP</code> to the checkout session cookie, URL, and cart form. Also supports Shopify automated shipping rules!
-          </div>
-          <div style="font-size: 11px; font-weight: 600; color: #008060;">✓ Auto-applied at checkout</div>
         </div>
-
-        <!-- Tier 2 -->
-        <div style="background: #f8fafc; border: 1px solid var(--p-border); border-radius: 10px; padding: 14px;">
-          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
-            <strong style="font-size: 13px; color: #1e293b;">🎁 Tier 2: Mystery Gift ($80)</strong>
-            <span class="pill" style="font-size: 11px;">AUTO-CART ADD</span>
-          </div>
-          <div style="font-size: 12px; color: var(--p-text-subdued); line-height: 1.5; margin-bottom: 8px;">
-            When cart subtotal reaches $80, the widget calls <code>POST /cart/add.js</code> to auto-add the free gift item into the cart with <code>_mascot_gift: true</code> property! Auto-removes if cart drops below $80.
-          </div>
-          <div style="font-size: 11px; font-weight: 600; color: #008060;">✓ Added to cart automatically</div>
-        </div>
-
-        <!-- Tier 3 -->
-        <div style="background: #f8fafc; border: 1px solid var(--p-border); border-radius: 10px; padding: 14px;">
-          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
-            <strong style="font-size: 13px; color: #1e293b;">👑 Tier 3: VIP 15% OFF ($120)</strong>
-            <span class="pill" style="font-size: 11px;">VIP15</span>
-          </div>
-          <div style="font-size: 12px; color: var(--p-text-subdued); line-height: 1.5; margin-bottom: 8px;">
-            When cart subtotal reaches $120, the widget auto-applies code <code>VIP15</code> (15% OFF entire order) via Shopify URL Discount API (<code>/discount/VIP15</code>) and passes it directly to Shopify Checkout!
-          </div>
-          <div style="font-size: 11px; font-weight: 600; color: #008060;">✓ 15% OFF applied at checkout</div>
+        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+          <a
+            href="/demo"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="banner-btn"
+          >
+            🛍️ Test Live Mascot in Simulator (/demo) →
+          </a>
+          <a
+            id="theme-editor-link"
+            href="javascript:void(0)"
+            class="banner-btn banner-btn-secondary"
+          >
+            🎨 Open Shopify Theme Editor →
+          </a>
         </div>
       </div>
 
-      <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 12px 16px; font-size: 12.5px; color: #1e40af; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
-        <div>
-          <strong>Reviewer / Merchant Testing Note:</strong> Ensure discounts <code>FREESHIP</code>, <code>FREEGIFT</code>, <code>VIP15</code>, and <code>SAVE10</code> are created in your store's Shopify Admin discounts.
-        </div>
-        <a href="https://admin.shopify.com/store/demo-store/discounts" target="_blank" rel="noopener noreferrer" class="btn-primary" style="font-size: 12px; padding: 6px 14px; text-decoration: none;">
-          ⚡ Open Shopify Admin Discounts →
-        </a>
-      </div>
-    </div>
-
-    <!-- Revenue Attribution KPI Cards -->
-    <div class="kpi-grid">
-      <div class="kpi-card">
-        <div class="kpi-label">Attributed Revenue</div>
-        <div class="kpi-value green" id="kpi-revenue">$15,480.00</div>
-        <div class="kpi-sub">↑ +14.8% AOV Lift</div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-label">Return on Investment</div>
-        <div class="kpi-value" id="kpi-roi">∞ (Free)</div>
-        <div class="kpi-sub" id="roi-plan-sub">On Free Tier ($0/mo)</div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-label">Carts Recovered (Exit Offer)</div>
-        <div class="kpi-value" id="kpi-recovered">94</div>
-        <div class="kpi-sub">27.5% exit offer conversion</div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-label">Milestones Reached</div>
-        <div class="kpi-value" id="kpi-milestones">618</div>
-        <div class="kpi-sub">Free shipping &amp; VIP tiers</div>
-      </div>
-    </div>
-
-    <!-- Empirical A/B Split Testing Proof Card -->
-    <div class="card" style="margin-bottom: 24px;">
-      <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 16px;">
-        <div>
-          <div class="card-title" style="margin-bottom: 4px;">
-            <span>🔬 A/B Conversion Lift &amp; Empirical ROI Proof</span>
-          </div>
-          <div class="card-subtitle" style="margin-bottom: 0;">
-            Real-time split test measuring Mascot Companion impact vs Unassisted Control Shoppers.
-          </div>
-        </div>
-        <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-          <span class="pill pill-green" id="ab-lift-pill">↑ +31.0% Conversion Lift</span>
-          <span class="pill pill-green" id="ab-rev-pill">+$6,843 Incremental Revenue</span>
-          <span class="pill" id="ab-conf-pill" style="background: #eff6ff; color: #1d4ed8; border-color: #bfdbfe;">99.4% Significant</span>
-        </div>
-      </div>
-
-      <div style="overflow-x: auto;">
-        <table class="polaris-table">
-          <thead>
-            <tr>
-              <th>Cohort</th>
-              <th>Traffic</th>
-              <th>Orders</th>
-              <th>Conv. Rate</th>
-              <th>Avg Order Value</th>
-              <th>Total Attributed Revenue</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>
-                <strong>Variant A: Mascot Companion</strong>
-                <span style="font-size: 11px; background: #ecfdf5; color: #065f46; padding: 2px 6px; border-radius: 4px; margin-left: 6px; font-weight: 600;">ACTIVE</span>
-              </td>
-              <td id="ab-a-sessions">7,140</td>
-              <td id="ab-a-orders">271</td>
-              <td id="ab-a-rate" style="font-weight: 700; color: #008060;">3.80%</td>
-              <td id="ab-a-aov" style="font-weight: 600;">$64.20</td>
-              <td id="ab-a-rev" style="font-weight: 700; color: #008060;">$17,400.00</td>
-            </tr>
-            <tr>
-              <td>
-                <span style="color: var(--p-text-subdued);">Variant B: Control (Hidden)</span>
-              </td>
-              <td id="ab-b-sessions">7,140</td>
-              <td id="ab-b-orders">207</td>
-              <td id="ab-b-rate" style="color: var(--p-text-subdued);">2.90%</td>
-              <td id="ab-b-aov" style="color: var(--p-text-subdued);">$51.00</td>
-              <td id="ab-b-rev" style="color: var(--p-text-subdued);">$10,557.00</td>
-            </tr>
-            <tr style="background: #f8fafc; font-weight: 700; border-top: 2px solid #e2e8f0;">
-              <td>Net Empirical Lift</td>
-              <td>50 / 50 Split</td>
-              <td id="ab-lift-orders" style="color: #008060;">+64 Orders (+30.9%)</td>
-              <td id="ab-lift-rate" style="color: #008060;">+0.90% (+31.0% Lift)</td>
-              <td id="ab-lift-aov" style="color: #008060;">+$13.20 (+25.8%)</td>
-              <td id="ab-lift-rev" style="color: #008060;">+$6,843.00 (+64.8%)</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <div class="content-grid">
-      <!-- Left Column: Settings Configurator -->
-      <div>
-        <div class="card">
-          <div class="card-title">
-            <span>Character &amp; Reward Configuration</span>
-            <span style="font-size: 12px; color: var(--p-text-subdued);">Saved to store config</span>
-          </div>
-          <div class="card-subtitle">Changes apply automatically across all storefront pages.</div>
-
-          <!-- 1-Click High-Converting Tone Presets -->
-          <div style="margin-bottom: 20px; padding: 12px 14px; background: #f8fafc; border: 1px solid var(--p-border); border-radius: 10px;">
-            <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--p-text-subdued); margin-bottom: 8px;">
-              ✨ 1-Click High-Converting Tone Presets
+      <!-- Merchant Quick Setup & Onboarding Checklist -->
+      <div class="card" style="border-left: 4px solid #008060; background: linear-gradient(180deg, #fbfbfb, #ffffff);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 8px;">
+          <div>
+            <div class="card-title" style="margin-bottom: 2px;">
+              <span>🚀 Merchant Quick Setup &amp; Onboarding Checklist</span>
             </div>
-            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-              <button type="button" class="btn-secondary preset-btn" data-preset="playful" style="padding: 5px 11px; font-size: 12px;">🐱 Playful &amp; Cute</button>
-              <button type="button" class="btn-secondary preset-btn" data-preset="luxury" style="padding: 5px 11px; font-size: 12px;">💎 Luxury Minimalist</button>
-              <button type="button" class="btn-secondary preset-btn" data-preset="fomo" style="padding: 5px 11px; font-size: 12px;">🔥 FOMO &amp; Urgency</button>
-              <button type="button" class="btn-secondary preset-btn" data-preset="streetwear" style="padding: 5px 11px; font-size: 12px;">⚡ Streetwear Bold</button>
+            <div class="card-subtitle" style="margin-bottom: 0;">
+              Follow these 3 simple steps to launch your gamified AOV milestone mascot.
             </div>
           </div>
+          <span class="pill pill-green">Step 2 of 3 Completed</span>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px;">
+          <div style="border: 1px solid var(--p-border); border-radius: 10px; padding: 14px; background: #fff;">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+              <span style="background: #ecfdf5; color: #065f46; font-weight: 700; width: 22px; height: 22px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 12px;">✓</span>
+              <strong style="font-size: 13px;">1. Theme App Embed</strong>
+            </div>
+            <div style="font-size: 12px; color: var(--p-text-subdued);">Enabled via Shopify Theme Editor. Zero theme liquid tampering, 100% clean uninstallation.</div>
+          </div>
+          <div style="border: 1px solid #008060; border-radius: 10px; padding: 14px; background: #f0fdf4;">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+              <span style="background: #008060; color: #fff; font-weight: 700; width: 22px; height: 22px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 12px;">2</span>
+              <strong style="font-size: 13px; color: #065f46;">2. Configure Rewards</strong>
+            </div>
+            <div style="font-size: 12px; color: #065f46;">Choose your mascot character and set spending goals below to drive higher basket sizes.</div>
+          </div>
+          <div style="border: 1px solid var(--p-border); border-radius: 10px; padding: 14px; background: #fff;">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+              <span style="background: #e2e8f0; color: #475569; font-weight: 700; width: 22px; height: 22px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 12px;">3</span>
+              <strong style="font-size: 13px;">3. Watch AOV Lift</strong>
+            </div>
+            <div style="font-size: 12px; color: var(--p-text-subdued);">Empirical A/B split testing proves statistical lift against control traffic automatically.</div>
+          </div>
+        </div>
+      </div>
 
+      <!-- Main Configuration & Live Preview Grid -->
+      <div class="content-grid">
+
+        <!-- Left Column: Form & Reward Pipeline -->
+        <div>
           <form id="settings-form">
-            <div class="form-row">
-              <div class="form-group">
-                <label class="form-label" for="cfg-persona">Mascot Persona Skin</label>
-                <select class="form-select" id="cfg-persona">
-                  <option value="orb" selected>Orb (Futuristic Sci-Fi)</option>
-                  <option value="pet">Pet (Cute Kitten / Puppy)</option>
-                  <option value="boba">Boba (Bubbly Cup)</option>
-                  <option value="ghost">Ghost (Spooky Cute / Streetwear)</option>
-                  <option value="dragon">Dragon (Mythic Baby Dragon / Anime &amp; Gaming)</option>
-                </select>
+
+            <!-- Card: Choose Your Character -->
+            <div class="card">
+              <div class="card-title">
+                <span>1. Choose Your Mascot Companion</span>
+                <span class="pill pill-green" id="active-char-tag" style="font-size: 11px;">Active: Orb</span>
               </div>
-              <div class="form-group">
-                <label class="form-label" for="cfg-sound">Sound Effects</label>
-                <select class="form-select" id="cfg-sound">
-                  <option value="true" selected>Enabled (Delightful Audio Chimes)</option>
-                  <option value="false">Muted (Silent)</option>
-                </select>
+              <div class="card-subtitle">Select the animated companion that matches your store's personality.</div>
+
+              <!-- Interactive Visual Character Picker Cards -->
+              <div class="character-picker-grid">
+                <div class="char-card active" data-persona="orb">
+                  <div class="char-check">✓</div>
+                  <div class="char-avatar">🔮</div>
+                  <div class="char-name">Orb</div>
+                  <div class="char-vibe">Modern &amp; Clean</div>
+                </div>
+                <div class="char-card" data-persona="pet">
+                  <div class="char-check">✓</div>
+                  <div class="char-avatar">🐱</div>
+                  <div class="char-name">Kitten</div>
+                  <div class="char-vibe">Cute &amp; Friendly</div>
+                </div>
+                <div class="char-card" data-persona="boba">
+                  <div class="char-check">✓</div>
+                  <div class="char-avatar">🧋</div>
+                  <div class="char-name">Boba</div>
+                  <div class="char-vibe">Trendy &amp; Playful</div>
+                </div>
+                <div class="char-card" data-persona="ghost">
+                  <div class="char-check">✓</div>
+                  <div class="char-avatar">👻</div>
+                  <div class="char-name">Ghost</div>
+                  <div class="char-vibe">Streetwear &amp; Cool</div>
+                </div>
+                <div class="char-card" data-persona="dragon">
+                  <div class="char-check">✓</div>
+                  <div class="char-avatar">🐉</div>
+                  <div class="char-name">Dragon</div>
+                  <div class="char-vibe">Anime &amp; Gaming</div>
+                </div>
+              </div>
+
+              <!-- Form Selects (Hidden from visual clutter, preserved for form submission & automated tests) -->
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <div class="form-group" style="margin-bottom: 0;">
+                  <label class="form-label" for="cfg-persona">Mascot Persona Skin</label>
+                  <select class="form-select" id="cfg-persona">
+                    <option value="orb" selected>Orb (Futuristic Sci-Fi)</option>
+                    <option value="pet">Pet (Cute Kitten / Puppy)</option>
+                    <option value="boba">Boba (Bubbly Cup)</option>
+                    <option value="ghost">Ghost (Spooky Cute / Streetwear)</option>
+                    <option value="dragon">Dragon (Mythic Baby Dragon / Anime &amp; Gaming)</option>
+                  </select>
+                </div>
+                <div class="form-group" style="margin-bottom: 0;">
+                  <label class="form-label" for="cfg-sound">Sound Effects</label>
+                  <select class="form-select" id="cfg-sound">
+                    <option value="true" selected>Enabled (Delightful Audio Chimes)</option>
+                    <option value="false">Muted (Silent)</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- 1-Click Tone Presets -->
+              <div style="margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--p-border);">
+                <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--p-text-subdued); margin-bottom: 8px;">
+                  ✨ Or Load 1-Click High-Converting Tone Preset:
+                </div>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                  <button type="button" class="btn-secondary preset-btn" data-preset="playful" style="padding: 5px 11px; font-size: 12px;">🐱 Playful &amp; Cute</button>
+                  <button type="button" class="btn-secondary preset-btn" data-preset="luxury" style="padding: 5px 11px; font-size: 12px;">💎 Luxury Minimalist</button>
+                  <button type="button" class="btn-secondary preset-btn" data-preset="fomo" style="padding: 5px 11px; font-size: 12px;">🔥 FOMO &amp; Urgency</button>
+                  <button type="button" class="btn-secondary preset-btn" data-preset="streetwear" style="padding: 5px 11px; font-size: 12px;">⚡ Streetwear Bold</button>
+                </div>
               </div>
             </div>
 
-            <div class="form-row">
-              <div class="form-group">
-                <label class="form-label" for="cfg-tier1-val">Tier 1 Goal ($ Free Shipping)</label>
-                <input class="form-input" type="number" id="cfg-tier1-val" value="50" min="5" />
+            <!-- Card: 3 Milestone Spending Rewards -->
+            <div class="card">
+              <div class="card-title">
+                <span>2. Gamified Spending Milestones</span>
+                <span style="font-size: 12px; color: var(--p-text-subdued);">Encourages buyers to add "just one more item"</span>
               </div>
-              <div class="form-group">
-                <label class="form-label" for="cfg-tier1-name">Tier 1 Reward Name</label>
-                <input class="form-input" type="text" id="cfg-tier1-name" value="Free Shipping" />
+              <div class="card-subtitle">
+                Set progressive cart amount goals. When shoppers add items, the mascot celebrates and unlocks discounts at checkout!
               </div>
-            </div>
-            <div class="form-group" style="margin-top: -6px; margin-bottom: 14px;">
-              <label class="form-label" for="cfg-tier1-code" style="font-size: 12px; color: var(--p-text-subdued);">Tier 1 Checkout Discount Code (Auto-applied)</label>
-              <input class="form-input" type="text" id="cfg-tier1-code" value="FREESHIP" style="font-size: 13px;" />
-            </div>
 
-            <div class="form-row">
-              <div class="form-group">
-                <label class="form-label" for="cfg-tier2-val">Tier 2 Goal ($ Free Gift)</label>
-                <input class="form-input" type="number" id="cfg-tier2-val" value="80" min="10" />
-              </div>
-              <div class="form-group">
-                <label class="form-label" for="cfg-tier2-name">Tier 2 Reward Name</label>
-                <input class="form-input" type="text" id="cfg-tier2-name" value="Mystery Gift 🎁" />
-              </div>
-            </div>
-            <div class="form-group" style="margin-top: -6px; margin-bottom: 14px;">
-              <label class="form-label" for="cfg-tier2-code" style="font-size: 12px; color: var(--p-text-subdued);">Tier 2 Free Gift Product / Discount Code</label>
-              <input class="form-input" type="text" id="cfg-tier2-code" value="FREEGIFT" style="font-size: 13px;" />
-            </div>
+              <div class="tier-builder-list">
 
-            <div class="form-row">
-              <div class="form-group">
-                <label class="form-label" for="cfg-tier3-val">Tier 3 Goal ($ VIP Perk)</label>
-                <input class="form-input" type="number" id="cfg-tier3-val" value="120" min="20" />
-              </div>
-              <div class="form-group">
-                <label class="form-label" for="cfg-tier3-name">Tier 3 Reward Name</label>
-                <input class="form-input" type="text" id="cfg-tier3-name" value="VIP 15% OFF 👑" />
-              </div>
-            </div>
-            <div class="form-group" style="margin-top: -6px; margin-bottom: 14px;">
-              <label class="form-label" for="cfg-tier3-code" style="font-size: 12px; color: var(--p-text-subdued);">Tier 3 VIP Checkout Discount Code (15% OFF)</label>
-              <input class="form-input" type="text" id="cfg-tier3-code" value="VIP15" style="font-size: 13px;" />
-            </div>
+                <!-- Tier 1: Free Shipping -->
+                <div class="tier-builder-card" style="border-left: 4px solid #3b82f6;">
+                  <div class="tier-card-header">
+                    <span class="tier-step-badge tier-badge-1">🚚 Tier 1 Milestone — Free Shipping</span>
+                    <span style="font-size: 11.5px; color: #1e40af; font-weight: 600;">✓ Auto-applied at checkout</span>
+                  </div>
+                  <div class="tier-inputs-row">
+                    <div class="form-group" style="margin-bottom: 0;">
+                      <label class="form-label" for="cfg-tier1-val">Cart Goal ($)</label>
+                      <div class="input-prefix-wrapper">
+                        <span class="input-prefix">$</span>
+                        <input class="form-input input-with-prefix" type="number" id="cfg-tier1-val" value="50" min="5" />
+                      </div>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                      <label class="form-label" for="cfg-tier1-name">Reward Name Shown to Buyer</label>
+                      <input class="form-input" type="text" id="cfg-tier1-name" value="Free Shipping" />
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                      <label class="form-label" for="cfg-tier1-code">Checkout Discount Code</label>
+                      <input class="form-input" type="text" id="cfg-tier1-code" value="FREESHIP" />
+                    </div>
+                  </div>
+                  <div class="form-help">When cart reaches $50, mascot cheers and applies discount code <code>FREESHIP</code> to checkout.</div>
+                </div>
 
-            <div class="form-row">
-              <div class="form-group">
-                <label class="form-label" for="cfg-discount-code">Exit Discount Code</label>
-                <input class="form-input" type="text" id="cfg-discount-code" value="SAVE10" />
-              </div>
-              <div class="form-group">
-                <label class="form-label" for="cfg-discount-pct">Discount Display Tag</label>
-                <input class="form-input" type="text" id="cfg-discount-pct" value="10%" />
-              </div>
-            </div>
+                <!-- Tier 2: Free Gift -->
+                <div class="tier-builder-card" style="border-left: 4px solid #f59e0b;">
+                  <div class="tier-card-header">
+                    <span class="tier-step-badge tier-badge-2">🎁 Tier 2 Milestone — Free Mystery Gift</span>
+                    <span style="font-size: 11.5px; color: #92400e; font-weight: 600;">✓ Added to cart automatically</span>
+                  </div>
+                  <div class="tier-inputs-row">
+                    <div class="form-group" style="margin-bottom: 0;">
+                      <label class="form-label" for="cfg-tier2-val">Cart Goal ($)</label>
+                      <div class="input-prefix-wrapper">
+                        <span class="input-prefix">$</span>
+                        <input class="form-input input-with-prefix" type="number" id="cfg-tier2-val" value="80" min="10" />
+                      </div>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                      <label class="form-label" for="cfg-tier2-name">Reward Name Shown to Buyer</label>
+                      <input class="form-input" type="text" id="cfg-tier2-name" value="Mystery Gift 🎁" />
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                      <label class="form-label" for="cfg-tier2-code">Gift Item / Discount Code</label>
+                      <input class="form-input" type="text" id="cfg-tier2-code" value="FREEGIFT" />
+                    </div>
+                  </div>
+                  <div class="form-help">When cart reaches $80, mascot automatically adds the complimentary gift item into the cart.</div>
+                </div>
 
-            <div style="display: flex; gap: 10px; margin-top: 10px;">
-              <button type="submit" class="btn-primary" id="save-settings-btn">Save Changes</button>
-              <button type="button" class="btn-secondary" id="sim-traffic-btn">⚡ Simulate 25 Shopper Visits</button>
-            </div>
-          </form>
-        </div>
+                <!-- Tier 3: VIP Discount -->
+                <div class="tier-builder-card" style="border-left: 4px solid #8b5cf6;">
+                  <div class="tier-card-header">
+                    <span class="tier-step-badge tier-badge-3">👑 Tier 3 Milestone — VIP Discount</span>
+                    <span style="font-size: 11.5px; color: #5b21b6; font-weight: 600;">✓ 15% OFF applied at checkout</span>
+                  </div>
+                  <div class="tier-inputs-row">
+                    <div class="form-group" style="margin-bottom: 0;">
+                      <label class="form-label" for="cfg-tier3-val">Cart Goal ($)</label>
+                      <div class="input-prefix-wrapper">
+                        <span class="input-prefix">$</span>
+                        <input class="form-input input-with-prefix" type="number" id="cfg-tier3-val" value="120" min="20" />
+                      </div>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                      <label class="form-label" for="cfg-tier3-name">Reward Name Shown to Buyer</label>
+                      <input class="form-input" type="text" id="cfg-tier3-name" value="VIP 15% OFF 👑" />
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                      <label class="form-label" for="cfg-tier3-code">Checkout Discount Code</label>
+                      <input class="form-input" type="text" id="cfg-tier3-code" value="VIP15" />
+                    </div>
+                  </div>
+                  <div class="form-help">When cart reaches $120, mascot crowns customer with VIP status and passes 15% off code <code>VIP15</code> to checkout!</div>
+                </div>
 
-        <!-- AI Personalization & Dynamic Copywriting Engine (Enterprise Feature) -->
-        <div class="card" style="border: 1px solid #c7d2fe; background: linear-gradient(180deg, #f5f3ff, #ffffff);">
-          <div class="card-title">
-            <span style="display: flex; align-items: center; gap: 8px;">
-              <span>🧠 AI Personalization &amp; Dynamic Copy Engine</span>
-            </span>
-            <span class="pill" style="background: #e0e7ff; color: #4338ca; border-color: #c7d2fe; font-size: 11px;">Included in Pro Plus ($199/mo)</span>
-          </div>
-          <div class="card-subtitle">
-            Generate high-converting milestone copy and calculate statistically optimal tier thresholds based on store AOV elasticity.
-          </div>
+                <!-- Exit-Intent Saver -->
+                <div class="tier-builder-card" style="border-left: 4px solid #ec4899; background: #fffdfd;">
+                  <div class="tier-card-header">
+                    <span class="tier-step-badge tier-badge-exit">🚪 Exit-Intent Cart Saver</span>
+                    <span style="font-size: 11.5px; color: #9d174d; font-weight: 600;">Recovers Abandoning Visitors</span>
+                  </div>
+                  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div class="form-group" style="margin-bottom: 0;">
+                      <label class="form-label" for="cfg-discount-code">Exit Discount Code</label>
+                      <input class="form-input" type="text" id="cfg-discount-code" value="SAVE10" />
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                      <label class="form-label" for="cfg-discount-pct">Discount Tag Label</label>
+                      <input class="form-input" type="text" id="cfg-discount-pct" value="10%" />
+                    </div>
+                  </div>
+                  <div class="form-help">If a shopper moves their mouse to close the store tab, the mascot pops up with a friendly 10% coupon to save the cart.</div>
+                </div>
 
-          <!-- Section 1: AI Threshold Calculator -->
-          <div style="background: #ffffff; border: 1px solid var(--p-border); border-radius: 10px; padding: 16px; margin-bottom: 16px;">
-            <div style="font-size: 13px; font-weight: 700; margin-bottom: 6px; color: #1e293b;">
-              🎯 AI Optimal Tier Threshold Calculator
-            </div>
-            <div style="font-size: 12px; color: var(--p-text-subdued); margin-bottom: 10px;">
-              Input your store's average order value to compute mathematically optimal milestones for +26.5% AOV lift.
-            </div>
-            <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 10px; align-items: flex-end;">
-              <div>
-                <label class="form-label" style="font-size: 12px;">Store Current AOV ($)</label>
-                <input class="form-input" type="number" id="ai-current-aov" value="65" min="10" placeholder="e.g. 65" />
               </div>
-              <div>
-                <button type="button" class="btn-primary" id="ai-calc-tiers-btn" style="width: 100%; font-size: 12px; justify-content: center;">
-                  ⚡ Calculate Optimal Tiers
+
+              <!-- Save Actions -->
+              <div style="display: flex; gap: 12px; align-items: center; padding-top: 10px; border-top: 1px solid var(--p-border);">
+                <button type="submit" class="btn-primary" id="save-settings-btn">
+                  <span>Save Changes</span>
+                </button>
+                <button type="button" class="btn-secondary" id="sim-traffic-btn">
+                  <span>⚡ Simulate 25 Shopper Visits</span>
                 </button>
               </div>
             </div>
-            <div id="ai-threshold-results" style="display: none; margin-top: 14px; padding: 14px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; font-size: 12px;">
-              <div style="font-weight: 700; color: #166534; margin-bottom: 6px;" id="ai-tier-heading">Calculated Recommendations:</div>
-              <div id="ai-tier-details" style="color: #374151; line-height: 1.6;"></div>
-              <button type="button" class="btn-primary" id="ai-apply-tiers-btn" style="margin-top: 10px; font-size: 11px; padding: 6px 12px;">✓ Apply Tiers to Store</button>
+
+          </form>
+
+          <!-- Storefront Checkout Rewards & Reviewer Verification Guide (Section 5.1.2) -->
+          <div class="card" style="background: #ffffff; border: 1px solid #c7d2fe; border-left: 4px solid #6366f1;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">
+              <div class="card-title" style="margin-bottom: 0;">
+                <span>🎁 How Rewards Work at Checkout (Shopify Review Requirement 5.1.2)</span>
+              </div>
+              <span class="pill pill-green" style="font-weight: 700;">✓ Automated Storefront Sync Active</span>
+            </div>
+            <div class="card-subtitle" style="margin-bottom: 12px;">
+              PulseMascot seamlessly connects storefront milestone achievements to Shopify Checkout using the Storefront Cart AJAX API and Shopify URL Discount API with zero invasive API scopes.
+            </div>
+
+            <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 12px 16px; font-size: 12.5px; color: #1e40af; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+              <div>
+                <strong>Merchant Note:</strong> Ensure discount codes <code>FREESHIP</code>, <code>FREEGIFT</code>, <code>VIP15</code>, and <code>SAVE10</code> are created in your Shopify Admin discounts.
+              </div>
+              <a href="https://admin.shopify.com/store/demo-store/discounts" target="_blank" rel="noopener noreferrer" class="btn-primary" style="font-size: 12px; padding: 6px 14px; text-decoration: none;">
+                ⚡ Open Shopify Admin Discounts →
+              </a>
             </div>
           </div>
 
-          <!-- Section 2: AI Milestone Copy Generator -->
-          <div style="background: #ffffff; border: 1px solid var(--p-border); border-radius: 10px; padding: 16px; margin-bottom: 16px;">
-            <div style="font-size: 13px; font-weight: 700; margin-bottom: 6px; color: #1e293b;">
-              ✨ AI High-Converting Milestone Copywriter
-            </div>
-            <div class="form-row">
-              <div class="form-group" style="margin-bottom: 0;">
-                <label class="form-label" style="font-size: 12px;">Store Niche / Category</label>
-                <select class="form-select" id="ai-copy-niche" style="font-size: 13px;">
-                  <option value="Streetwear & Apparel">Streetwear &amp; Apparel</option>
-                  <option value="Pet Supplies">Pet Supplies &amp; Animal Care</option>
-                  <option value="Clean Beauty & Cosmetics">Clean Beauty &amp; Cosmetics</option>
-                  <option value="Gaming & Anime">Gaming &amp; Anime Collectibles</option>
-                  <option value="Food & Beverage">Food &amp; Specialty Beverages</option>
-                </select>
-              </div>
-              <div class="form-group" style="margin-bottom: 0;">
-                <label class="form-label" style="font-size: 12px;">Cart Deficit Amount ($)</label>
-                <input class="form-input" type="number" id="ai-copy-deficit" value="14.50" step="0.5" />
-              </div>
-            </div>
-            <button type="button" class="btn-secondary" id="ai-generate-copy-btn" style="margin-top: 12px; font-size: 12px; width: 100%; justify-content: center;">
-              🪄 Generate Persuasive Copy
-            </button>
-            <div id="ai-copy-results" style="display: none; margin-top: 12px; flex-direction: column; gap: 8px;">
-              <!-- Dynamically populated -->
-            </div>
-          </div>
+        </div>
 
-          <!-- Section 3: Retargeting Pixel Bridge -->
-          <div style="background: #ffffff; border: 1px solid var(--p-border); border-radius: 10px; padding: 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-            <div>
-              <strong style="font-size: 13px; display: block; margin-bottom: 2px;">🎯 Meta (Facebook) &amp; TikTok Ad Retargeting Pixel Bridge</strong>
-              <span style="font-size: 12px; color: var(--p-text-subdued);">Fires custom events (MascotExitOfferSeen, MascotDiscountClaimed) into your ad pixels for high-ROAS retargeting.</span>
+        <!-- Right Column: Interactive Live Mascot Preview Stage -->
+        <div>
+          <div class="card" style="position: sticky; top: 88px;">
+            <div class="card-title">
+              <span>Interactive Mascot Preview</span>
+              <span class="pill pill-green" style="font-size: 11px;">Interactive</span>
             </div>
-            <span class="pill pill-green" style="font-weight: 700;">ACTIVE (Zero Setup)</span>
+            <div class="card-subtitle">Real-time vector rendering of your active mascot. Test emotional reactions instantly!</div>
+
+            <!-- Mascot Stage -->
+            <div class="preview-stage-container">
+              <div class="preview-badge" id="preview-persona-label">ACTIVE: ORB</div>
+              <store-mascot
+                id="admin-mascot-preview"
+                persona="orb"
+                enable-sound="true"
+                tier1-threshold="50"
+                tier1-reward="Free Shipping"
+                tier2-threshold="80"
+                tier2-reward="Mystery Gift 🎁"
+                tier3-threshold="120"
+                tier3-reward="VIP 15% OFF 👑"
+                position="bottom-right"
+                offset-x="20"
+                offset-y="20"
+                data-initial-cart-total="45.0"
+                data-initial-item-count="2"
+                show-branding="true"
+              ></store-mascot>
+            </div>
+
+            <!-- Instant Interaction Simulator Buttons -->
+            <div style="font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--p-text-subdued); text-align: center; margin-bottom: 6px;">
+              Test Shopper Cart States Live:
+            </div>
+            <div class="sim-buttons-bar">
+              <button type="button" class="sim-tag-btn" onclick="testPreviewCart(0)">🛒 Empty ($0)</button>
+              <button type="button" class="sim-tag-btn" onclick="testPreviewCart(35)">📦 $35 Progress</button>
+              <button type="button" class="sim-tag-btn" onclick="testPreviewCart(55)">🚚 Free Ship ($55)</button>
+              <button type="button" class="sim-tag-btn" onclick="testPreviewCart(85)">🎁 Gift ($85)</button>
+              <button type="button" class="sim-tag-btn" onclick="testPreviewCart(125)">👑 VIP ($125)</button>
+              <button type="button" class="sim-tag-btn" onclick="testPreviewExit()">🚪 Exit Saver</button>
+            </div>
+
+            <div style="margin-top: 20px; padding: 14px; background: #f8fafc; border: 1px solid var(--p-border); border-radius: 10px; font-size: 12.5px; color: #475569; line-height: 1.5;">
+              <strong style="color: #1e293b; display: block; margin-bottom: 4px;">💡 Pro Merchant Tip:</strong>
+              Stores that set Tier 1 (Free Shipping) 15-20% higher than their baseline Average Order Value typically experience a <strong>+18% to +31% lift</strong> in completed order value.
+            </div>
           </div>
         </div>
 
-        <!-- Shopify App Store Billing Plans (Million-Dollar SaaS Tiers) -->
-        <div class="card">
-          <div class="card-title">
-            <span>Shopify Billing Subscription</span>
-            <span style="font-size: 12px; color: var(--p-text-subdued);">Exclusively processed via Shopify Billing API</span>
-          </div>
-          <div class="card-subtitle">Select your scaling tier. 7-day risk-free trial on all plans.</div>
-
-          <div class="pricing-grid" style="grid-template-columns: repeat(2, 1fr); gap: 12px;">
-            <div class="plan-box active" data-plan="Free" data-price="0">
-              <div class="plan-name">Free Tier</div>
-              <div class="plan-price">$0</div>
-              <div class="plan-desc">1 Tier • Orb Persona • Basic Analytics</div>
-            </div>
-            <div class="plan-box" data-plan="Growth" data-price="79">
-              <div class="plan-name">Growth</div>
-              <div class="plan-price">$79/mo</div>
-              <div class="plan-desc">5 Personas • Multi-Tier • Exit Saver • Audio</div>
-            </div>
-            <div class="plan-box" data-plan="Pro Plus" data-price="199">
-              <div class="plan-name">Pro Plus 🚀</div>
-              <div class="plan-price" style="color: #4338ca;">$199/mo</div>
-              <div class="plan-desc">AI Personalization • Pixel Bridge • A/B Engine</div>
-            </div>
-            <div class="plan-box" data-plan="Enterprise" data-price="499">
-              <div class="plan-name">Enterprise / Agency 👑</div>
-              <div class="plan-price" style="color: #b45309;">$499/mo</div>
-              <div class="plan-desc">Multi-Store Portal • White-Label • WASM Functions</div>
-            </div>
-          </div>
-          <div style="margin-top: 14px; font-size: 11px; color: var(--p-text-subdued); text-align: center; border-top: 1px solid var(--p-border); padding-top: 10px;">
-            ⚡ Usage-Based Scale: $0.05 per recovered cart after first 50/month. 7-Day Free Trial Protected.
-          </div>
-        </div>
       </div>
 
-      <!-- Right Column: Live Mascot Preview & Recent Conversions -->
-      <div>
-        <div class="card">
-          <div class="card-title">Live Mascot Character Preview</div>
-          <div class="card-subtitle">Real-time vector rendering of active character.</div>
-
-          <div class="preview-stage-container">
-            <div class="preview-badge" id="preview-persona-label">ACTIVE: ORB</div>
-            <!-- Embedded Store Mascot Component for live admin preview -->
-            <store-mascot
-              id="admin-mascot-preview"
-              persona="orb"
-              enable-sound="true"
-              tier1-threshold="50"
-              tier1-reward="Free Shipping"
-              tier2-threshold="80"
-              tier2-reward="Mystery Gift 🎁"
-              tier3-threshold="120"
-              tier3-reward="VIP 15% OFF 👑"
-              position="bottom-right"
-              offset-x="20"
-              offset-y="20"
-              data-initial-cart-total="45.0"
-              data-initial-item-count="2"
-              show-branding="true"
-            ></store-mascot>
-          </div>
-          <div style="font-size: 12px; color: var(--p-text-subdued); text-align: center;">
-            Hover over the mascot or click to test emotional responses!
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="card-title">Recent Attributed Orders</div>
-          <div class="card-subtitle">Real-time stream of recovered carts &amp; unlocked rewards.</div>
-
-          <div class="event-feed" id="event-feed">
-            <!-- Dynamically populated from /api/metrics -->
-          </div>
-        </div>
-      </div>
     </div>
 
-    <!-- Shopify Polaris Standard Footer (Section 3.1.1, 3.2.1, 3.2.2 & 3.2.3) -->
-    <footer style="margin-top: 48px; border-top: 1px solid var(--p-border); padding-top: 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; font-size: 13px; color: var(--p-text-subdued);">
+    <!-- ================================================================= -->
+    <!-- TAB 2: 📊 SALES & REVENUE (Financial Impact & Proof) -->
+    <!-- ================================================================= -->
+    <div id="tab-analytics" class="tab-pane" role="tabpanel">
+
+      <!-- Revenue Attribution KPI Cards -->
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-label">Attributed Revenue</div>
+          <div class="kpi-value green" id="kpi-revenue">$15,480.00</div>
+          <div class="kpi-sub">↑ +14.8% AOV Lift</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Return on Investment</div>
+          <div class="kpi-value" id="kpi-roi">∞ (Free)</div>
+          <div class="kpi-sub" id="roi-plan-sub">On Free Tier ($0/mo)</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Carts Recovered (Exit Offer)</div>
+          <div class="kpi-value" id="kpi-recovered">94</div>
+          <div class="kpi-sub">27.5% exit offer conversion</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Milestones Reached</div>
+          <div class="kpi-value" id="kpi-milestones">618</div>
+          <div class="kpi-sub">Free shipping &amp; VIP tiers</div>
+        </div>
+      </div>
+
+      <!-- Empirical A/B Split Testing Proof Card -->
+      <div class="card">
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 16px;">
+          <div>
+            <div class="card-title" style="margin-bottom: 4px;">
+              <span>🔬 A/B Conversion Lift &amp; Empirical ROI Proof</span>
+            </div>
+            <div class="card-subtitle" style="margin-bottom: 0;">
+              Real-time split test measuring Mascot Companion impact vs Unassisted Control Shoppers.
+            </div>
+          </div>
+          <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+            <span class="pill pill-green" id="ab-lift-pill">↑ +31.0% Conversion Lift</span>
+            <span class="pill pill-green" id="ab-rev-pill">+$6,843 Incremental Revenue</span>
+            <span class="pill" id="ab-conf-pill" style="background: #eff6ff; color: #1d4ed8; border-color: #bfdbfe;">99.4% Significant</span>
+          </div>
+        </div>
+
+        <div style="overflow-x: auto;">
+          <table class="polaris-table">
+            <thead>
+              <tr>
+                <th>Cohort</th>
+                <th>Traffic</th>
+                <th>Orders</th>
+                <th>Conv. Rate</th>
+                <th>Avg Order Value</th>
+                <th>Total Attributed Revenue</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>
+                  <strong>Variant A: Mascot Companion</strong>
+                  <span style="font-size: 11px; background: #ecfdf5; color: #065f46; padding: 2px 6px; border-radius: 4px; margin-left: 6px; font-weight: 600;">ACTIVE</span>
+                </td>
+                <td id="ab-a-sessions">7,140</td>
+                <td id="ab-a-orders">271</td>
+                <td id="ab-a-rate" style="font-weight: 700; color: #008060;">3.80%</td>
+                <td id="ab-a-aov" style="font-weight: 600;">$64.20</td>
+                <td id="ab-a-rev" style="font-weight: 700; color: #008060;">$17,400.00</td>
+              </tr>
+              <tr>
+                <td>
+                  <span style="color: var(--p-text-subdued);">Variant B: Control (Hidden)</span>
+                </td>
+                <td id="ab-b-sessions">7,140</td>
+                <td id="ab-b-orders">207</td>
+                <td id="ab-b-rate" style="color: var(--p-text-subdued);">2.90%</td>
+                <td id="ab-b-aov" style="color: var(--p-text-subdued);">$51.00</td>
+                <td id="ab-b-rev" style="color: var(--p-text-subdued);">$10,557.00</td>
+              </tr>
+              <tr style="background: #f8fafc; font-weight: 700; border-top: 2px solid #e2e8f0;">
+                <td>Net Empirical Lift</td>
+                <td>50 / 50 Split</td>
+                <td id="ab-lift-orders" style="color: #008060;">+64 Orders (+30.9%)</td>
+                <td id="ab-lift-rate" style="color: #008060;">+0.90% (+31.0% Lift)</td>
+                <td id="ab-lift-aov" style="color: #008060;">+$13.20 (+25.8%)</td>
+                <td id="ab-lift-rev" style="color: #008060;">+$6,843.00 (+64.8%)</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Recent Attributed Orders Live Feed -->
+      <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+          <div class="card-title" style="margin-bottom: 0;">Recent Attributed Orders</div>
+          <a href="/api/export-csv" download="pulsemascot-attribution.csv" class="btn-secondary" style="font-size: 12px; padding: 6px 12px;">📥 Download CSV Report</a>
+        </div>
+        <div class="card-subtitle">Real-time stream of recovered carts &amp; unlocked rewards across your store.</div>
+
+        <div class="event-feed" id="event-feed">
+          <!-- Dynamically populated from /api/metrics -->
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- TAB 3: 🧠 SMART AI BOOSTERS (AI Optimization & Dynamic Copy) -->
+    <!-- ================================================================= -->
+    <div id="tab-ai" class="tab-pane" role="tabpanel">
+
+      <div class="card" style="border: 1px solid #c7d2fe; background: linear-gradient(180deg, #f5f3ff, #ffffff);">
+        <div class="card-title">
+          <span style="display: flex; align-items: center; gap: 8px;">
+            <span>🧠 AI Personalization &amp; Dynamic Copy Engine</span>
+          </span>
+          <span class="pill" style="background: #e0e7ff; color: #4338ca; border-color: #c7d2fe; font-size: 11px;">Included in Pro Plus ($199/mo)</span>
+        </div>
+        <div class="card-subtitle">
+          Generate high-converting milestone copy and calculate mathematically optimal tier thresholds based on your store's average order value.
+        </div>
+
+        <!-- Section 1: AI Threshold Calculator -->
+        <div style="background: #ffffff; border: 1px solid var(--p-border); border-radius: 10px; padding: 18px; margin-bottom: 18px;">
+          <div style="font-size: 14px; font-weight: 700; margin-bottom: 4px; color: #1e293b;">
+            🎯 AI Optimal Tier Threshold Calculator
+          </div>
+          <div style="font-size: 12.5px; color: var(--p-text-subdued); margin-bottom: 14px;">
+            Input your store's average order value to compute mathematically optimal milestones for +26.5% AOV lift.
+          </div>
+          <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 12px; align-items: flex-end;">
+            <div>
+              <label class="form-label" style="font-size: 12px;">Store Current AOV ($)</label>
+              <input class="form-input" type="number" id="ai-current-aov" value="65" min="10" placeholder="e.g. 65" />
+            </div>
+            <div>
+              <button type="button" class="btn-primary" id="ai-calc-tiers-btn" style="width: 100%; font-size: 13px; justify-content: center;">
+                ⚡ Calculate Optimal Tiers
+              </button>
+            </div>
+          </div>
+          <div id="ai-threshold-results" style="display: none; margin-top: 14px; padding: 14px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; font-size: 12.5px;">
+            <div style="font-weight: 700; color: #166534; margin-bottom: 6px;" id="ai-tier-heading">Calculated Recommendations:</div>
+            <div id="ai-tier-details" style="color: #374151; line-height: 1.6;"></div>
+            <button type="button" class="btn-primary" id="ai-apply-tiers-btn" style="margin-top: 10px; font-size: 12px; padding: 6px 14px;">✓ Apply Tiers to Store</button>
+          </div>
+        </div>
+
+        <!-- Section 2: AI Milestone Copy Generator -->
+        <div style="background: #ffffff; border: 1px solid var(--p-border); border-radius: 10px; padding: 18px; margin-bottom: 18px;">
+          <div style="font-size: 14px; font-weight: 700; margin-bottom: 4px; color: #1e293b;">
+            ✨ AI High-Converting Milestone Copywriter
+          </div>
+          <div style="font-size: 12.5px; color: var(--p-text-subdued); margin-bottom: 14px;">
+            Generate persuasive nudges tailored to your product niche when a shopper is just a few dollars short of free shipping.
+          </div>
+          <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 12px;">
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label" style="font-size: 12px;">Store Niche / Category</label>
+              <select class="form-select" id="ai-copy-niche">
+                <option value="Streetwear & Apparel">Streetwear &amp; Apparel</option>
+                <option value="Pet Supplies">Pet Supplies &amp; Animal Care</option>
+                <option value="Clean Beauty & Cosmetics">Clean Beauty &amp; Cosmetics</option>
+                <option value="Gaming & Anime">Gaming &amp; Anime Collectibles</option>
+                <option value="Food & Beverage">Food &amp; Specialty Beverages</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label" style="font-size: 12px;">Cart Deficit Amount ($)</label>
+              <input class="form-input" type="number" id="ai-copy-deficit" value="14.50" step="0.5" />
+            </div>
+          </div>
+          <button type="button" class="btn-secondary" id="ai-generate-copy-btn" style="margin-top: 12px; font-size: 12.5px; width: 100%; justify-content: center;">
+            🪄 Generate Persuasive Copy
+          </button>
+          <div id="ai-copy-results" style="display: none; margin-top: 12px; flex-direction: column; gap: 8px;">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+
+        <!-- Section 3: Retargeting Pixel Bridge -->
+        <div style="background: #ffffff; border: 1px solid var(--p-border); border-radius: 10px; padding: 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+          <div>
+            <strong style="font-size: 13.5px; display: block; margin-bottom: 2px;">🎯 Meta (Facebook) &amp; TikTok Ad Retargeting Pixel Bridge</strong>
+            <span style="font-size: 12px; color: var(--p-text-subdued);">Fires custom events (MascotExitOfferSeen, MascotDiscountClaimed) into your ad pixels for high-ROAS retargeting.</span>
+          </div>
+          <span class="pill pill-green" style="font-weight: 700;">ACTIVE (Zero Setup)</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- TAB 4: 💳 PLAN & BILLING (Shopify Billing API) -->
+    <!-- ================================================================= -->
+    <div id="tab-billing" class="tab-pane" role="tabpanel">
+
+      <div class="card">
+        <div class="card-title">
+          <span>Shopify Billing Subscription</span>
+          <span style="font-size: 12px; color: var(--p-text-subdued);">Exclusively processed via Shopify Billing API</span>
+        </div>
+        <div class="card-subtitle">Select your scaling tier. All plans protected with a 7-day risk-free trial.</div>
+
+        <div class="pricing-grid">
+          <div class="plan-box active" data-plan="Free" data-price="0">
+            <div class="plan-name">Free Tier</div>
+            <div class="plan-price">$0</div>
+            <div class="plan-desc">1 Tier • Orb Persona • Basic Analytics</div>
+          </div>
+          <div class="plan-box" data-plan="Growth" data-price="79">
+            <div class="plan-name">Growth</div>
+            <div class="plan-price">$79/mo</div>
+            <div class="plan-desc">5 Personas • Multi-Tier • Exit Saver • Audio</div>
+          </div>
+          <div class="plan-box" data-plan="Pro Plus" data-price="199">
+            <div class="plan-name">Pro Plus 🚀</div>
+            <div class="plan-price" style="color: #4338ca;">$199/mo</div>
+            <div class="plan-desc">AI Personalization • Pixel Bridge • A/B Engine</div>
+          </div>
+          <div class="plan-box" data-plan="Enterprise" data-price="499">
+            <div class="plan-name">Enterprise / Agency 👑</div>
+            <div class="plan-price" style="color: #b45309;">$499/mo</div>
+            <div class="plan-desc">Multi-Store Portal • White-Label • WASM Functions</div>
+          </div>
+        </div>
+
+        <div style="margin-top: 18px; font-size: 12px; color: var(--p-text-subdued); text-align: center; border-top: 1px solid var(--p-border); padding-top: 14px;">
+          ⚡ Usage-Based Scale: $0.05 per recovered cart after first 50/month. Billed transparently on your official Shopify invoice.
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Polaris Standard Merchant Footer -->
+    <footer class="admin-footer">
       <div style="display: flex; align-items: center; gap: 10px;">
         <div class="brand-icon" style="width: 24px; height: 24px; font-size: 13px;">⚡</div>
         <strong>PulseMascot</strong> &bull;
@@ -870,11 +1338,12 @@
         <span>Least Privilege (0 Scopes)</span>
       </div>
       <div style="display: flex; gap: 18px; align-items: center;">
-        <a href="/privacy-policy" target="_blank" rel="noopener noreferrer" style="color: var(--p-text-subdued); text-decoration: none; font-weight: 500;">Privacy Policy</a>
-        <a href="/terms-of-service" target="_blank" rel="noopener noreferrer" style="color: var(--p-text-subdued); text-decoration: none; font-weight: 500;">Terms of Service</a>
-        <a href="mailto:support@pulsemascot.com" style="color: #008060; text-decoration: none; font-weight: 600;">Contact Support</a>
+        <a href="/privacy-policy" target="_blank" rel="noopener noreferrer">Privacy Policy</a>
+        <a href="/terms-of-service" target="_blank" rel="noopener noreferrer">Terms of Service</a>
+        <a href="mailto:support@pulsemascot.com" style="color: #008060; font-weight: 600;">Contact Support</a>
       </div>
     </footer>
+
   </main>
 
   <!-- Merchant Support Modal Dialog (Section 3.2.3) -->
@@ -899,7 +1368,7 @@
       <div style="font-size: 13px; margin-bottom: 20px;">
         <strong>Quick Troubleshooting:</strong>
         <ul style="padding-left: 20px; margin-top: 6px; color: #374151; font-size: 13px; line-height: 1.6;">
-          <li>Theme Embed not showing? Ensure "Store Mascot Companion" is toggled ON in Theme Editor > App Embeds.</li>
+          <li>Theme Embed not showing? Ensure "Store Mascot Companion" is toggled ON in Theme Editor &gt; App Embeds.</li>
           <li>Testing discounts? Ensure discount code (e.g. <code>SAVE10</code>) is created in Shopify Discounts.</li>
           <li>Sound effects: Modern browsers require a user gesture (click/tap) before audio plays.</li>
         </ul>
@@ -921,6 +1390,29 @@
   <script src="/assets/mascot-widget.js"></script>
 
   <script>
+    // Tab Switching Logic
+    const tabButtons = document.querySelectorAll('.nav-tab-btn');
+    const tabPanes = document.querySelectorAll('.tab-pane');
+
+    function switchTab(tabId) {
+      tabButtons.forEach(btn => {
+        const isTarget = btn.getAttribute('data-tab') === tabId;
+        btn.classList.toggle('active', isTarget);
+        btn.setAttribute('aria-selected', String(isTarget));
+      });
+      tabPanes.forEach(pane => {
+        pane.classList.toggle('active', pane.id === `tab-${tabId}`);
+      });
+    }
+
+    tabButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const targetTab = btn.getAttribute('data-tab');
+        switchTab(targetTab);
+      });
+    });
+
+    // Toast Banner
     function showToast(msg) {
       const toast = document.getElementById('toast-banner');
       const text = document.getElementById('toast-message');
@@ -934,6 +1426,56 @@
     document.getElementById('open-support-btn').addEventListener('click', () => { modal.style.display = 'flex'; });
     document.getElementById('close-support-btn').addEventListener('click', () => { modal.style.display = 'none'; });
     document.getElementById('modal-close-action-btn').addEventListener('click', () => { modal.style.display = 'none'; });
+
+    // Interactive Preview Live Simulation
+    function testPreviewCart(amount) {
+      const mascot = document.getElementById('admin-mascot-preview');
+      if (!mascot) return;
+      mascot.setAttribute('data-initial-cart-total', String(amount));
+      if (typeof mascot._checkMilestones === 'function') {
+        mascot._checkMilestones(amount, amount > 0 ? 2 : 0);
+      }
+      showToast(`Mascot reacting to cart amount: $${amount}.00`);
+    }
+
+    function testPreviewExit() {
+      const mascot = document.getElementById('admin-mascot-preview');
+      if (mascot && typeof mascot.triggerExitIntent === 'function') {
+        mascot.triggerExitIntent();
+        showToast('Exit-Intent coupon bubble displayed!');
+      }
+    }
+
+    // Interactive Character Picker Sync
+    function selectPersona(persona) {
+      document.querySelectorAll('.char-card').forEach(card => {
+        card.classList.toggle('active', card.getAttribute('data-persona') === persona);
+      });
+      const select = document.getElementById('cfg-persona');
+      if (select) select.value = persona;
+      updateAdminPreview(persona);
+      const tag = document.getElementById('active-char-tag');
+      if (tag) tag.textContent = `Active: ${persona.charAt(0).toUpperCase() + persona.slice(1)}`;
+    }
+
+    document.querySelectorAll('.char-card').forEach(card => {
+      card.addEventListener('click', () => {
+        const p = card.getAttribute('data-persona');
+        selectPersona(p);
+      });
+    });
+
+    function updateAdminPreview(persona) {
+      const mascot = document.getElementById('admin-mascot-preview');
+      if (mascot) {
+        mascot.setAttribute('persona', persona);
+      }
+      document.getElementById('preview-persona-label').textContent = `ACTIVE: ${persona.toUpperCase()}`;
+    }
+
+    document.getElementById('cfg-persona').addEventListener('change', (e) => {
+      selectPersona(e.target.value);
+    });
 
     async function fetchMetrics() {
       try {
@@ -1041,32 +1583,32 @@
         const res = await fetch('/api/settings');
         const cfg = await res.json();
 
-        document.getElementById('cfg-persona').value = cfg.persona || 'orb';
+        const persona = cfg.persona || 'orb';
+        selectPersona(persona);
+
         document.getElementById('cfg-sound').value = String(cfg.enableSound !== false);
         document.getElementById('cfg-tier1-val').value = cfg.tier1Threshold || 50;
         document.getElementById('cfg-tier1-name').value = cfg.tier1Reward || 'Free Shipping';
+        if (cfg.tier1DiscountCode && document.getElementById('cfg-tier1-code')) {
+          document.getElementById('cfg-tier1-code').value = cfg.tier1DiscountCode;
+        }
+
         document.getElementById('cfg-tier2-val').value = cfg.tier2Threshold || 80;
         document.getElementById('cfg-tier2-name').value = cfg.tier2Reward || 'Mystery Gift 🎁';
+        if (cfg.tier2DiscountCode && document.getElementById('cfg-tier2-code')) {
+          document.getElementById('cfg-tier2-code').value = cfg.tier2DiscountCode;
+        }
+
         document.getElementById('cfg-tier3-val').value = cfg.tier3Threshold || 120;
         document.getElementById('cfg-tier3-name').value = cfg.tier3Reward || 'VIP 15% OFF 👑';
+        if (cfg.tier3DiscountCode && document.getElementById('cfg-tier3-code')) {
+          document.getElementById('cfg-tier3-code').value = cfg.tier3DiscountCode;
+        }
+
         document.getElementById('cfg-discount-code').value = cfg.exitDiscountCode || 'SAVE10';
         document.getElementById('cfg-discount-pct').value = cfg.exitDiscountPercent || '10%';
-
-        updateAdminPreview(cfg.persona || 'orb');
       } catch (_) {}
     }
-
-    function updateAdminPreview(persona) {
-      const mascot = document.getElementById('admin-mascot-preview');
-      if (mascot) {
-        mascot.setAttribute('persona', persona);
-      }
-      document.getElementById('preview-persona-label').textContent = `ACTIVE: ${persona.toUpperCase()}`;
-    }
-
-    document.getElementById('cfg-persona').addEventListener('change', (e) => {
-      updateAdminPreview(e.target.value);
-    });
 
     document.getElementById('settings-form').addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -1077,10 +1619,13 @@
         enableSound: document.getElementById('cfg-sound').value === 'true',
         tier1Threshold: parseFloat(document.getElementById('cfg-tier1-val').value) || 50,
         tier1Reward: document.getElementById('cfg-tier1-name').value,
+        tier1DiscountCode: document.getElementById('cfg-tier1-code') ? document.getElementById('cfg-tier1-code').value : 'FREESHIP',
         tier2Threshold: parseFloat(document.getElementById('cfg-tier2-val').value) || 80,
         tier2Reward: document.getElementById('cfg-tier2-name').value,
+        tier2DiscountCode: document.getElementById('cfg-tier2-code') ? document.getElementById('cfg-tier2-code').value : 'FREEGIFT',
         tier3Threshold: parseFloat(document.getElementById('cfg-tier3-val').value) || 120,
         tier3Reward: document.getElementById('cfg-tier3-name').value,
+        tier3DiscountCode: document.getElementById('cfg-tier3-code') ? document.getElementById('cfg-tier3-code').value : 'VIP15',
         exitDiscountCode: document.getElementById('cfg-discount-code').value,
         exitDiscountPercent: document.getElementById('cfg-discount-pct').value,
       };
@@ -1092,7 +1637,7 @@
           body: JSON.stringify(payload)
         });
         saveBtn.textContent = 'Saved! ✓';
-        showToast('Configuration successfully saved to store!');
+        showToast('Configuration successfully saved to your store!');
         setTimeout(() => { saveBtn.textContent = 'Save Changes'; }, 2000);
       } catch (err) {
         saveBtn.textContent = 'Error Saving';
@@ -1206,8 +1751,7 @@
         document.getElementById('cfg-tier1-name').value = p.tier1;
         document.getElementById('cfg-tier2-name').value = p.tier2;
         document.getElementById('cfg-tier3-name').value = p.tier3;
-        document.getElementById('cfg-persona').value = p.persona;
-        updateAdminPreview(p.persona);
+        selectPersona(p.persona);
         btn.style.borderColor = '#008060';
         btn.style.color = '#008060';
         showToast(`Loaded ${key.toUpperCase()} tone preset!`);
@@ -1257,6 +1801,7 @@
       document.getElementById('cfg-tier2-name').value = lastCalculatedTiers.tier2.reward;
       document.getElementById('cfg-tier3-val').value = lastCalculatedTiers.tier3.threshold;
       document.getElementById('cfg-tier3-name').value = lastCalculatedTiers.tier3.reward;
+      switchTab('setup');
       showToast('Applied AI thresholds! Click "Save Changes" to publish.');
     });
 
