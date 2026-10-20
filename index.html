@@ -767,6 +767,60 @@
     </div>
   </div>
 
+  <!-- Shopify Checkout Preview Modal -->
+  <div class="roi-modal-backdrop" id="checkout-modal">
+    <div class="roi-modal-card" style="max-width: 580px; width: 100%;">
+      <div class="roi-modal-header">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="font-size: 24px;">🛍️</span>
+          <div>
+            <div class="roi-modal-title" style="font-size: 18px;">Shopify Checkout Live Preview</div>
+            <div style="font-size: 12px; color: #94a3b8;">End-to-end checkout verification for Shopify App Store review</div>
+          </div>
+        </div>
+        <button class="roi-modal-close" id="close-checkout-modal">&times;</button>
+      </div>
+
+      <!-- Verification Banner -->
+      <div style="background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.4); border-radius: 10px; padding: 12px 16px; margin-bottom: 16px; display: flex; align-items: center; gap: 10px;">
+        <span style="font-size: 20px;">✓</span>
+        <div style="font-size: 13px; color: #34d399; font-weight: 600;" id="checkout-verif-headline">
+          Rewards Successfully Applied at Checkout
+        </div>
+      </div>
+
+      <!-- Cart Items List in Checkout -->
+      <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 16px; max-height: 180px; overflow-y: auto;" id="checkout-items-list">
+        <!-- Dynamically rendered -->
+      </div>
+
+      <!-- Pricing Summary -->
+      <div style="display: flex; flex-direction: column; gap: 8px; font-size: 13.5px; border-bottom: 1px solid var(--border); padding-bottom: 14px; margin-bottom: 14px;">
+        <div style="display: flex; justify-content: space-between;">
+          <span style="color: #94a3b8;">Subtotal</span>
+          <span style="font-weight: 600;" id="chk-subtotal">$0.00</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <span style="color: #94a3b8;">Shipping</span>
+          <span id="chk-shipping" style="font-weight: 700; color: #34d399;">$0.00 (FREE)</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center;" id="chk-discount-row">
+          <span style="color: #94a3b8;">Discount (<span id="chk-discount-code">NONE</span>)</span>
+          <span id="chk-discount-amount" style="font-weight: 700; color: #34d399;">-$0.00</span>
+        </div>
+      </div>
+
+      <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 18px;">
+        <span style="font-size: 16px; font-weight: 700;">Total Due</span>
+        <span style="font-size: 24px; font-weight: 800; color: #34d399;" id="chk-total">$0.00</span>
+      </div>
+
+      <button type="button" class="btn btn-checkout" id="close-checkout-btn" style="width: 100%; justify-content: center; padding: 12px;">
+        ✓ Complete Checkout Test &amp; Return
+      </button>
+    </div>
+  </div>
+
   <!-- Instantiate <store-mascot> with full Liquid settings -->
   <store-mascot
     id="mascot"
@@ -776,10 +830,15 @@
     free-shipping-threshold="50"
     tier1-threshold="50"
     tier1-reward="Free Shipping"
+    tier1-discount-code="FREESHIP"
     tier2-threshold="80"
     tier2-reward="Mystery Gift 🎁"
+    tier2-gift-variant-id="880101"
+    tier2-gift-title="Mystery Gift 🎁"
+    tier2-discount-code="FREEGIFT"
     tier3-threshold="120"
     tier3-reward="VIP 15% OFF 👑"
+    tier3-discount-code="VIP15"
     enable-exit-intent="true"
     exit-discount-code="SAVE10"
     exit-discount-percent="10%"
@@ -876,10 +935,42 @@
         }
       }
 
+      let activeCheckoutDiscount = '';
+
       // Mock window.fetch interceptor
       const nativeFetch = window.fetch.bind(window);
       window.fetch = async function (input, init = {}) {
         const url = typeof input === 'string' ? input : (input && input.url) || '';
+
+        // Mock Shopify /products.json
+        if (/\/products\.json/i.test(url)) {
+          return new Response(JSON.stringify({
+            products: [
+              {
+                id: 8801,
+                title: "Mystery Gift 🎁 (Tier 2 Milestone Perk)",
+                variants: [
+                  { id: 880101, title: "Free Gift Variant", price: "0.00", available: true }
+                ]
+              }
+            ]
+          }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          });
+        }
+
+        // Mock Shopify /discount/{code}
+        if (/\/discount\//i.test(url)) {
+          const match = url.match(/\/discount\/([^?]+)/i);
+          const code = match ? decodeURIComponent(match[1]) : '';
+          activeCheckoutDiscount = code;
+          appendLog('Shopify /discount/' + code, `✓ Applied "${code}" discount to checkout session!`);
+          return new Response(JSON.stringify({ status: 'ok', discount: code }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          });
+        }
 
         if (/\/cart\/(add|change|clear)(\.js)?/i.test(url)) {
           let body = {};
@@ -890,20 +981,46 @@
           const sym = mascot.currencySymbol || '$';
 
           if (/\/cart\/add/i.test(url)) {
-            const priceCents = Math.round((Number(body.priceDollars) || 20) * 100);
-            const title = body.title || 'Storefront Item';
-            mockCart.items.push({
-              id: Date.now() + Math.floor(Math.random() * 1000),
-              title,
-              quantity: 1,
-              price: priceCents,
-              final_line_price: priceCents,
-            });
-            appendLog('fetch(/cart/add.js)', `Added "${title}" (${sym}${(priceCents / 100).toFixed(2)}) → Cart: ${sym}${(mockCart.total_price / 100).toFixed(2)}`);
+            if (Array.isArray(body.items)) {
+              for (const it of body.items) {
+                const isGift = it.properties && (it.properties['_mascot_gift'] === 'true' || it.properties['_mascot_gift'] === true);
+                mockCart.items.push({
+                  id: it.id || 880101,
+                  title: isGift ? '🎁 Mystery Gift (Tier 2 Milestone Perk)' : 'Storefront Item',
+                  quantity: it.quantity || 1,
+                  price: isGift ? 0 : 2000,
+                  final_line_price: isGift ? 0 : 2000,
+                  properties: it.properties || {},
+                });
+                appendLog(isGift ? '🎁 Gift Auto-Add' : 'fetch(/cart/add.js)', isGift ? 'Auto-added Tier 2 Free Gift 🎁 ($0.00)' : `Added item (${sym}20.00)`);
+              }
+            } else {
+              const priceCents = Math.round((Number(body.priceDollars) || 20) * 100);
+              const title = body.title || 'Storefront Item';
+              mockCart.items.push({
+                id: Date.now() + Math.floor(Math.random() * 1000),
+                title,
+                quantity: 1,
+                price: priceCents,
+                final_line_price: priceCents,
+              });
+              appendLog('fetch(/cart/add.js)', `Added "${title}" (${sym}${(priceCents / 100).toFixed(2)}) → Cart: ${sym}${(mockCart.total_price / 100).toFixed(2)}`);
+            }
           } else if (/\/cart\/change/i.test(url)) {
-            if (mockCart.items.length > 0) {
-              const popped = mockCart.items.pop();
-              appendLog('fetch(/cart/change.js)', `Removed "${popped.title}" → Cart: ${sym}${(mockCart.total_price / 100).toFixed(2)}`);
+            if (body.quantity === 0) {
+              if (body.id) {
+                const idx = mockCart.items.findIndex(i => String(i.id) === String(body.id));
+                if (idx >= 0) {
+                  const rm = mockCart.items.splice(idx, 1)[0];
+                  appendLog('fetch(/cart/change.js)', `Removed "${rm.title}"`);
+                }
+              } else if (typeof body.line === 'number' && body.line > 0 && body.line <= mockCart.items.length) {
+                const rm = mockCart.items.splice(body.line - 1, 1)[0];
+                appendLog('fetch(/cart/change.js)', `Removed line ${body.line}: "${rm.title}"`);
+              } else if (mockCart.items.length > 0) {
+                const popped = mockCart.items.pop();
+                appendLog('fetch(/cart/change.js)', `Removed "${popped.title}" → Cart: ${sym}${(mockCart.total_price / 100).toFixed(2)}`);
+              }
             }
           } else if (/\/cart\/clear/i.test(url)) {
             mockCart.items = [];
@@ -944,6 +1061,110 @@
         });
       }
 
+      // Checkout Preview Modal Logic
+      const checkoutModal = document.getElementById('checkout-modal');
+      const closeCheckoutModal = document.getElementById('close-checkout-modal');
+      const closeCheckoutBtn = document.getElementById('close-checkout-btn');
+      const checkoutItemsList = document.getElementById('checkout-items-list');
+      const chkSubtotal = document.getElementById('chk-subtotal');
+      const chkShipping = document.getElementById('chk-shipping');
+      const chkDiscountRow = document.getElementById('chk-discount-row');
+      const chkDiscountCode = document.getElementById('chk-discount-code');
+      const chkDiscountAmount = document.getElementById('chk-discount-amount');
+      const chkTotal = document.getElementById('chk-total');
+      const checkoutVerifHeadline = document.getElementById('checkout-verif-headline');
+
+      function openCheckoutPreview() {
+        const sym = mascot.currencySymbol || '$';
+        const rawTotalDollars = mockCart.total_price / 100;
+        const t1 = mascot.tier1Threshold;
+        const t2 = mascot.tier2Threshold;
+        const t3 = mascot.tier3Threshold;
+
+        // Render Cart Items
+        checkoutItemsList.innerHTML = '';
+        if (mockCart.items.length === 0) {
+          checkoutItemsList.innerHTML = '<div style="color:#94a3b8; font-size:13px; text-align:center;">Cart is empty. Add products to test checkout!</div>';
+        } else {
+          mockCart.items.forEach((item) => {
+            const isGift = item.properties && (item.properties['_mascot_gift'] === 'true' || item.properties['_mascot_gift'] === true);
+            const row = document.createElement('div');
+            row.style.cssText = 'display:flex; justify-content:space-between; align-items:center; padding:6px 0; font-size:13px; border-bottom:1px dashed rgba(255,255,255,0.06);';
+            row.innerHTML = `
+              <div>
+                <span style="font-weight:600; color:${isGift ? '#34d399' : '#f8fafc'};">${escapeHtml(item.title)}</span>
+                <span style="color:#94a3b8; font-size:11.5px; margin-left:6px;">x${item.quantity || 1}</span>
+                ${isGift ? '<span style="background:rgba(16,185,129,0.2); color:#34d399; font-size:10px; font-weight:700; padding:2px 6px; border-radius:4px; margin-left:6px;">TIER 2 REWARD</span>' : ''}
+              </div>
+              <div style="font-weight:700; color:${isGift ? '#34d399' : '#cbd5e1'};">
+                ${isGift ? 'FREE ($0.00)' : sym + (item.final_line_price / 100).toFixed(2)}
+              </div>
+            `;
+            checkoutItemsList.appendChild(row);
+          });
+        }
+
+        chkSubtotal.textContent = `${sym}${rawTotalDollars.toFixed(2)}`;
+
+        // Shipping Calculation
+        const hasFreeShipping = rawTotalDollars >= t1 || activeCheckoutDiscount === 'FREESHIP';
+        if (hasFreeShipping) {
+          chkShipping.textContent = 'FREE ($0.00)';
+          chkShipping.style.color = '#34d399';
+        } else {
+          chkShipping.textContent = `${sym}4.99`;
+          chkShipping.style.color = '#cbd5e1';
+        }
+
+        // Discount Calculation
+        let discountDollars = 0;
+        let appliedCode = activeCheckoutDiscount;
+
+        if (rawTotalDollars >= t3 && t3 > 0) {
+          appliedCode = mascot.tier3DiscountCode || 'VIP15';
+          discountDollars = rawTotalDollars * 0.15;
+          chkDiscountRow.style.display = 'flex';
+          chkDiscountCode.textContent = `${appliedCode} • 15% VIP Perk`;
+          chkDiscountAmount.textContent = `-${sym}${discountDollars.toFixed(2)}`;
+        } else if (appliedCode === mascot.exitDiscountCode || appliedCode === 'SAVE10') {
+          appliedCode = mascot.exitDiscountCode || 'SAVE10';
+          discountDollars = rawTotalDollars * 0.10;
+          chkDiscountRow.style.display = 'flex';
+          chkDiscountCode.textContent = `${appliedCode} • 10% Exit Saver`;
+          chkDiscountAmount.textContent = `-${sym}${discountDollars.toFixed(2)}`;
+        } else if (hasFreeShipping && activeCheckoutDiscount === 'FREESHIP') {
+          chkDiscountRow.style.display = 'flex';
+          chkDiscountCode.textContent = `FREESHIP • Free Shipping`;
+          chkDiscountAmount.textContent = `-${sym}4.99`;
+        } else {
+          chkDiscountRow.style.display = 'none';
+        }
+
+        const shippingCost = hasFreeShipping ? 0 : 4.99;
+        const totalDue = Math.max(0, rawTotalDollars - discountDollars + shippingCost);
+        chkTotal.textContent = `${sym}${totalDue.toFixed(2)}`;
+
+        // Verification Status Badge
+        if (rawTotalDollars >= t3) {
+          checkoutVerifHeadline.innerHTML = '👑 <strong>ALL 3 MILESTONES APPLIED:</strong> Free Shipping ($0.00) + Mystery Gift 🎁 in cart ($0.00) + 15% OFF VIP Discount (' + appliedCode + ')!';
+        } else if (rawTotalDollars >= t2) {
+          checkoutVerifHeadline.innerHTML = '🎁 <strong>2 MILESTONES APPLIED:</strong> Free Shipping ($0.00) + Mystery Gift 🎁 in cart ($0.00)!';
+        } else if (rawTotalDollars >= t1) {
+          checkoutVerifHeadline.innerHTML = '🚚 <strong>1 MILESTONE APPLIED:</strong> Free Shipping ($0.00) successfully active at checkout!';
+        } else {
+          checkoutVerifHeadline.innerHTML = '🛒 Standard Checkout Active • Add items to unlock Tier 1 Free Shipping (' + sym + t1 + ')!';
+        }
+
+        checkoutModal.classList.add('open');
+        appendLog('Checkout Preview', `Opened live checkout preview (${sym}${totalDue.toFixed(2)} due, Free Shipping: ${hasFreeShipping ? 'YES' : 'NO'}, Discount: ${appliedCode || 'NONE'})`);
+      }
+
+      closeCheckoutModal.addEventListener('click', () => checkoutModal.classList.remove('open'));
+      closeCheckoutBtn.addEventListener('click', () => checkoutModal.classList.remove('open'));
+      checkoutModal.addEventListener('click', (e) => {
+        if (e.target === checkoutModal) checkoutModal.classList.remove('open');
+      });
+
       // Button Handlers
       document.getElementById('quick-add-tier1').addEventListener('click', () => {
         const cur = mockCart.total_price / 100;
@@ -966,12 +1187,12 @@
       document.getElementById('sim-exit-intent').addEventListener('click', () => {
         sessionStorage.removeItem('__storeMascotExitTriggered__');
         mascot._triggerExitIntentOffer();
-        appendLog('Exit Intent', 'Triggered exit-intent abandonment offer');
+        activeCheckoutDiscount = mascot.exitDiscountCode;
+        appendLog('Exit Intent', 'Triggered exit-intent abandonment offer (Code: ' + mascot.exitDiscountCode + ')');
       });
 
       document.getElementById('quick-checkout-btn').addEventListener('click', () => {
-        mascot.nudge();
-        appendLog('Checkout', 'Triggered mascot NUDGE state');
+        openCheckoutPreview();
       });
 
       document.querySelectorAll('.product-add-btn').forEach((btn) => {

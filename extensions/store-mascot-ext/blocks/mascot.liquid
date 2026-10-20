@@ -12,10 +12,15 @@
   free-shipping-threshold="{{ block.settings.tier1_threshold | default: 50 }}"
   tier1-threshold="{{ block.settings.tier1_threshold | default: 50 }}"
   tier1-reward="{{ block.settings.tier1_reward | default: 'Free Shipping' | escape }}"
+  tier1-discount-code="{{ block.settings.tier1_discount_code | default: 'FREESHIP' | escape }}"
   tier2-threshold="{{ block.settings.tier2_threshold | default: 80 }}"
   tier2-reward="{{ block.settings.tier2_reward | default: 'Mystery Gift 🎁' | escape }}"
+  tier2-gift-variant-id="{{ block.settings.tier2_gift_product.selected_or_first_available_variant.id }}"
+  tier2-gift-title="{{ block.settings.tier2_gift_product.title | default: 'Mystery Gift 🎁' | escape }}"
+  tier2-discount-code="{{ block.settings.tier2_discount_code | default: 'FREEGIFT' | escape }}"
   tier3-threshold="{{ block.settings.tier3_threshold | default: 120 }}"
   tier3-reward="{{ block.settings.tier3_reward | default: 'VIP 15% OFF 👑' | escape }}"
+  tier3-discount-code="{{ block.settings.tier3_discount_code | default: 'VIP15' | escape }}"
   enable-exit-intent="{{ block.settings.enable_exit_intent }}"
   exit-discount-code="{{ block.settings.exit_discount_code | default: 'SAVE10' | escape }}"
   exit-discount-percent="{{ block.settings.exit_discount_percent | default: '10%' | escape }}"
@@ -97,9 +102,16 @@
       "default": "Free Shipping"
     },
     {
+      "type": "text",
+      "id": "tier1_discount_code",
+      "label": "Tier 1 Checkout Discount Code",
+      "info": "Optional code auto-applied at checkout (default: FREESHIP). Leave blank if store has automated free shipping rate.",
+      "default": "FREESHIP"
+    },
+    {
       "type": "number",
       "id": "tier2_threshold",
-      "label": "Tier 2 Threshold (e.g. Free Gift)",
+      "label": "Tier 2 Threshold (Free Gift)",
       "info": "Set to 0 to disable Tier 2.",
       "default": 80
     },
@@ -110,9 +122,22 @@
       "default": "Mystery Gift 🎁"
     },
     {
+      "type": "product",
+      "id": "tier2_gift_product",
+      "label": "Tier 2 Free Gift Product",
+      "info": "Select the free gift product automatically added to cart when Tier 2 threshold is reached."
+    },
+    {
+      "type": "text",
+      "id": "tier2_discount_code",
+      "label": "Tier 2 Gift Discount Code",
+      "info": "Optional 100% discount code for the gift at checkout (default: FREEGIFT).",
+      "default": "FREEGIFT"
+    },
+    {
       "type": "number",
       "id": "tier3_threshold",
-      "label": "Tier 3 Threshold (e.g. VIP Perk)",
+      "label": "Tier 3 Threshold (VIP Discount Perk)",
       "info": "Set to 0 to disable Tier 3.",
       "default": 120
     },
@@ -121,6 +146,13 @@
       "id": "tier3_reward",
       "label": "Tier 3 Reward Name",
       "default": "VIP 15% OFF 👑"
+    },
+    {
+      "type": "text",
+      "id": "tier3_discount_code",
+      "label": "Tier 3 VIP Discount Code",
+      "info": "Discount code auto-applied at checkout when Tier 3 is reached (default: VIP15).",
+      "default": "VIP15"
     },
     {
       "type": "header",

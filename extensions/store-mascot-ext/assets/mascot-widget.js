@@ -396,11 +396,13 @@
 :host([data-state="NUDGE"]) .character-root { animation: nudgeLean 1.5s ease-in-out infinite; }
 
 /* Persona Swapping */
-.persona-orb, .persona-pet, .persona-boba { display: none; }
+.persona-orb, .persona-pet, .persona-boba, .persona-ghost, .persona-dragon { display: none; }
 :host(:not([persona])) .persona-orb,
 :host([persona="orb"]) .persona-orb { display: inline; }
 :host([persona="pet"]) .persona-pet { display: inline; }
 :host([persona="boba"]) .persona-boba { display: inline; }
+:host([persona="ghost"]) .persona-ghost { display: inline; }
+:host([persona="dragon"]) .persona-dragon { display: inline; }
 
 /* Emotional Eye Expressions */
 .eyes-idle, .eyes-celebrate, .eyes-sad, .eyes-nudge {
@@ -774,10 +776,15 @@
         'free-shipping-threshold',
         'tier1-threshold',
         'tier1-reward',
+        'tier1-discount-code',
         'tier2-threshold',
         'tier2-reward',
+        'tier2-gift-variant-id',
+        'tier2-gift-title',
+        'tier2-discount-code',
         'tier3-threshold',
         'tier3-reward',
+        'tier3-discount-code',
         'persona',
         'enable-sound',
         'enable-exit-intent',
@@ -808,6 +815,10 @@
       this._synth = new MascotSynth();
       this._cohort = 'variant_a';
       this._isControlGroup = false;
+      this._activeDiscountCode = '';
+      this._isSyncingGift = false;
+      this._cachedGiftVariantId = null;
+      this._hasGiftInCart = false;
 
       // Pupil tracking variables
       this._targetEyeX = 0;
@@ -827,6 +838,7 @@
       this._onScroll = () => this._handleScroll();
       this._onResize = () => this._handleResize();
       this._onDocOver = (e) => this._handleDocumentMouseOver(e);
+      this._onDocClick = (e) => this._handleDocClick(e);
       this._onCartEvent = (e) => this._handleCartCustomEvent(e);
       this._onFetch = (u, d) => this._handleFetchIntercepted(u, d);
       this._onBlockSelect = (e) => this._handleBlockSelect(e);
@@ -887,6 +899,7 @@
       window.addEventListener('scroll', this._onScroll, { passive: true });
       window.addEventListener('resize', this._onResize, { passive: true });
       document.addEventListener('mouseover', this._onDocOver, { passive: true });
+      document.addEventListener('click', this._onDocClick, { capture: true });
       document.addEventListener('mouseleave', this._onWindowMouseLeave, { passive: true });
 
       ['cart:updated', 'cart:refresh'].forEach((evt) => {
@@ -903,6 +916,18 @@
       this._startTrackingLoop();
       this._hydrateFromLiquid();
 
+      // Theme Editor Design Mode Detection
+      if (typeof window !== 'undefined' && window.Shopify && window.Shopify.designMode) {
+        this.setAttribute('data-editor-selected', 'true');
+        setTimeout(() => {
+          this.nudge(`Welcome! ⚡ Rewards Preview: Free Shipping ($${this.tier1Threshold}), Mystery Gift ($${this.tier2Threshold}), VIP 15% OFF ($${this.tier3Threshold})!`, {
+            badge: 'Theme Editor Preview',
+            duration: 0,
+            showMeter: true,
+          });
+        }, 300);
+      }
+
       // Record impressions
       MascotAnalytics.record('impressions', 1);
       this._sendTelemetry('impression', { cohort: 'variant_a' });
@@ -915,6 +940,7 @@
       window.removeEventListener('scroll', this._onScroll);
       window.removeEventListener('resize', this._onResize);
       document.removeEventListener('mouseover', this._onDocOver);
+      document.removeEventListener('click', this._onDocClick, { capture: true });
       document.removeEventListener('mouseleave', this._onWindowMouseLeave);
 
       ['cart:updated', 'cart:refresh'].forEach((evt) => {
@@ -937,10 +963,12 @@
       this._syncAttributes();
       if (
         name.includes('threshold') ||
+        name.includes('discount') ||
+        name.includes('gift') ||
         name === 'currency-symbol' ||
         name === 'persona'
       ) {
-        if (this._itemCount > 0 || this._bubbleEl.classList.contains('visible')) {
+        if (this._itemCount > 0 || (this._bubbleEl && this._bubbleEl.classList.contains('visible'))) {
           this._renderHydratedCartState(false);
         }
       }
@@ -953,12 +981,16 @@
     }
     get freeShippingThreshold() { return this.tier1Threshold; }
     get tier1Reward() { return this.getAttribute('tier1-reward') || 'Free Shipping'; }
+    get tier1DiscountCode() { return (this.getAttribute('tier1-discount-code') || 'FREESHIP').trim(); }
 
     get tier2Threshold() {
       const v = parseFloat(this.getAttribute('tier2-threshold'));
       return Number.isFinite(v) && v > this.tier1Threshold ? v : 0;
     }
     get tier2Reward() { return this.getAttribute('tier2-reward') || 'Mystery Gift 🎁'; }
+    get tier2GiftVariantId() { return (this.getAttribute('tier2-gift-variant-id') || '').trim(); }
+    get tier2GiftTitle() { return this.getAttribute('tier2-gift-title') || 'Mystery Gift 🎁'; }
+    get tier2DiscountCode() { return (this.getAttribute('tier2-discount-code') || 'FREEGIFT').trim(); }
 
     get tier3Threshold() {
       const v = parseFloat(this.getAttribute('tier3-threshold'));
@@ -966,6 +998,7 @@
       return Number.isFinite(v) && v > min ? v : 0;
     }
     get tier3Reward() { return this.getAttribute('tier3-reward') || 'VIP 15% OFF 👑'; }
+    get tier3DiscountCode() { return (this.getAttribute('tier3-discount-code') || 'VIP15').trim(); }
 
     get currencySymbol() { return this.getAttribute('currency-symbol') || '$'; }
     get persona() {
@@ -1026,19 +1059,34 @@
       }
     }
 
-    _renderHydratedCartState(allowConfetti = false) {
-      const status = this._calculateTierStatus();
+    _renderHydratedCartState(allowConfetti = false, items = null) {
+      const status = this._calculateTierStatus(items);
+      if (status.activeDiscountCode) {
+        this._syncCheckoutDiscounts(status.activeDiscountCode);
+      }
+      this._syncGift(status.shouldHaveGift, items);
+
       if (status.isAllUnlocked) {
+        const discountHint = this.tier3DiscountCode ? ` (${this.tier3DiscountCode} applied)` : '';
         this.setState(STATES.CELEBRATE, {
-          message: `All Rewards Unlocked! You're a VIP! 👑🎉`,
+          message: `All Rewards Unlocked! You're a VIP! 👑 Free Shipping, Mystery Gift 🎁 in cart & 15% OFF${discountHint} applied at checkout! 🎉`,
           badge: 'VIP Status Unlocked',
           confetti: allowConfetti,
           sound: allowConfetti,
           showMeter: true,
         });
-      } else if (status.currentTierAchieved > 0) {
+      } else if (status.currentTierAchieved === 2) {
         this.setState(STATES.CELEBRATE, {
-          message: `${status.lastUnlockedReward} Unlocked! 🎉 Add ${this.currencySymbol}${this._formatAmount(status.remainingToNext)} for ${status.nextReward}!`,
+          message: `${status.lastUnlockedReward} Added to Cart! 🎁 Free Shipping applied! Add ${this.currencySymbol}${this._formatAmount(status.remainingToNext)} for ${status.nextReward}!`,
+          badge: 'Reward Unlocked',
+          confetti: allowConfetti,
+          sound: allowConfetti,
+          showMeter: true,
+        });
+      } else if (status.currentTierAchieved === 1) {
+        const shipHint = this.tier1DiscountCode ? ` (${this.tier1DiscountCode} applied)` : '';
+        this.setState(STATES.CELEBRATE, {
+          message: `${status.lastUnlockedReward} Unlocked! 🚚${shipHint} Add ${this.currencySymbol}${this._formatAmount(status.remainingToNext)} for ${status.nextReward}!`,
           badge: 'Reward Unlocked',
           confetti: allowConfetti,
           sound: allowConfetti,
@@ -1052,27 +1100,72 @@
       }
     }
 
-    _calculateTierStatus() {
-      const total = this._cartTotalDollars;
+    _calculateTierStatus(items = null) {
+      let total = this._cartTotalDollars;
+      if (Array.isArray(items)) {
+        for (const it of items) {
+          const isGift = it.properties && (it.properties['_mascot_gift'] === 'true' || it.properties['_mascot_gift'] === true);
+          if (isGift && typeof it.final_line_price === 'number') {
+            total = Math.max(0, total - (it.final_line_price / 100));
+          }
+        }
+      }
+
       const t1 = this.tier1Threshold;
       const t2 = this.tier2Threshold;
       const t3 = this.tier3Threshold;
 
       if (t3 > 0 && total >= t3) {
-        return { isAllUnlocked: true, currentTierAchieved: 3, lastUnlockedReward: this.tier3Reward, nextReward: '', remainingToNext: 0, progressPct: 100 };
+        return {
+          isAllUnlocked: true,
+          currentTierAchieved: 3,
+          lastUnlockedReward: this.tier3Reward,
+          nextReward: '',
+          remainingToNext: 0,
+          progressPct: 100,
+          activeDiscountCode: this.tier3DiscountCode,
+          shouldHaveGift: t2 > 0,
+        };
       }
       if (t3 > 0 && total >= t2 && t2 > 0) {
         const rem = t3 - total;
         const span = t3 - t2;
-        return { isAllUnlocked: false, currentTierAchieved: 2, lastUnlockedReward: this.tier2Reward, nextReward: this.tier3Reward, remainingToNext: rem, progressPct: Math.min(100, ((total - t2) / span) * 100) };
+        return {
+          isAllUnlocked: false,
+          currentTierAchieved: 2,
+          lastUnlockedReward: this.tier2Reward,
+          nextReward: this.tier3Reward,
+          remainingToNext: rem,
+          progressPct: Math.min(100, ((total - t2) / span) * 100),
+          activeDiscountCode: this.tier1DiscountCode,
+          shouldHaveGift: true,
+        };
       }
       if (t2 > 0 && total >= t1) {
         const rem = t2 - total;
         const span = t2 - t1;
-        return { isAllUnlocked: false, currentTierAchieved: 1, lastUnlockedReward: this.tier1Reward, nextReward: this.tier2Reward, remainingToNext: rem, progressPct: Math.min(100, ((total - t1) / span) * 100) };
+        return {
+          isAllUnlocked: false,
+          currentTierAchieved: 1,
+          lastUnlockedReward: this.tier1Reward,
+          nextReward: this.tier2Reward,
+          remainingToNext: rem,
+          progressPct: Math.min(100, ((total - t1) / span) * 100),
+          activeDiscountCode: this.tier1DiscountCode,
+          shouldHaveGift: false,
+        };
       }
       if (total >= t1 && t2 === 0) {
-        return { isAllUnlocked: true, currentTierAchieved: 1, lastUnlockedReward: this.tier1Reward, nextReward: '', remainingToNext: 0, progressPct: 100 };
+        return {
+          isAllUnlocked: true,
+          currentTierAchieved: 1,
+          lastUnlockedReward: this.tier1Reward,
+          nextReward: '',
+          remainingToNext: 0,
+          progressPct: 100,
+          activeDiscountCode: this.tier1DiscountCode,
+          shouldHaveGift: false,
+        };
       }
 
       // Progress towards Tier 1
@@ -1084,7 +1177,180 @@
         nextReward: this.tier1Reward,
         remainingToNext: rem,
         progressPct: Math.min(100, Math.max(0, (total / t1) * 100)),
+        activeDiscountCode: '',
+        shouldHaveGift: false,
       };
+    }
+
+    _syncCheckoutDiscounts(code) {
+      if (!code) return;
+      this._activeDiscountCode = code;
+
+      // 1. Session cookie via Shopify Storefront URL discount API
+      try {
+        if (typeof window !== 'undefined' && window.fetch) {
+          window.fetch('/discount/' + encodeURIComponent(code), {
+            method: 'GET',
+            credentials: 'same-origin',
+          }).catch(() => {});
+        }
+      } catch (_) {}
+
+      // 2. Inject hidden discount field into all cart / checkout forms
+      try {
+        const forms = document.querySelectorAll('form[action*="/cart"], form[action*="/checkout"]');
+        forms.forEach((form) => {
+          let input = form.querySelector('input.mascot-discount-field');
+          if (!input) {
+            input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'discount';
+            input.className = 'mascot-discount-field';
+            form.appendChild(input);
+          }
+          input.value = code;
+        });
+      } catch (_) {}
+
+      // 3. Update all links pointing to /checkout
+      try {
+        const links = document.querySelectorAll('a[href*="/checkout"]');
+        links.forEach((a) => {
+          try {
+            const url = new URL(a.href, window.location.origin);
+            if (url.pathname.includes('/checkout')) {
+              url.searchParams.set('discount', code);
+              a.href = url.pathname + url.search + url.hash;
+            }
+          } catch (_) {}
+        });
+      } catch (_) {}
+    }
+
+    _handleDocClick(e) {
+      const target = e.target;
+      if (!target || typeof target.closest !== 'function') return;
+
+      const checkoutEl = target.closest('[name="checkout"], .checkout-btn, [href*="/checkout"], [data-mascot-checkout]');
+      if (checkoutEl && this._activeDiscountCode) {
+        if (checkoutEl.tagName === 'A' && checkoutEl.href) {
+          try {
+            const url = new URL(checkoutEl.href, window.location.origin);
+            url.searchParams.set('discount', this._activeDiscountCode);
+            checkoutEl.href = url.pathname + url.search + url.hash;
+          } catch (_) {}
+        }
+        const form = checkoutEl.closest('form');
+        if (form) {
+          let input = form.querySelector('input.mascot-discount-field');
+          if (!input) {
+            input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'discount';
+            input.className = 'mascot-discount-field';
+            form.appendChild(input);
+          }
+          input.value = this._activeDiscountCode;
+        }
+      }
+    }
+
+    _checkCartForGift(items) {
+      if (!Array.isArray(items)) return { hasGift: false, line: -1, variantId: null };
+      for (let i = 0; i < items.length; i++) {
+        const it = items[i];
+        const isGiftProp = it.properties && (it.properties['_mascot_gift'] === 'true' || it.properties['_mascot_gift'] === true);
+        const isGiftId = (this.tier2GiftVariantId && String(it.id) === String(this.tier2GiftVariantId)) ||
+                         (this._cachedGiftVariantId && String(it.id) === String(this._cachedGiftVariantId));
+        if (isGiftProp || isGiftId) {
+          return { hasGift: true, line: i + 1, variantId: it.id, quantity: it.quantity };
+        }
+      }
+      return { hasGift: false, line: -1, variantId: null };
+    }
+
+    async _getGiftVariantId() {
+      if (this.tier2GiftVariantId) return this.tier2GiftVariantId;
+      if (this._cachedGiftVariantId) return this._cachedGiftVariantId;
+      try {
+        const res = await window.fetch('/products.json?limit=5', { credentials: 'same-origin' });
+        if (res.ok) {
+          const data = await res.json();
+          if (data && Array.isArray(data.products)) {
+            for (const prod of data.products) {
+              if (Array.isArray(prod.variants) && prod.variants.length > 0) {
+                const avail = prod.variants.find((v) => v.available !== false) || prod.variants[0];
+                if (avail && avail.id) {
+                  this._cachedGiftVariantId = String(avail.id);
+                  return this._cachedGiftVariantId;
+                }
+              }
+            }
+          }
+        }
+      } catch (_) {}
+      return null;
+    }
+
+    async _syncGift(shouldHaveGift, cartItems) {
+      if (this._isSyncingGift || this.tier2Threshold <= 0) return;
+      const giftInfo = this._checkCartForGift(cartItems);
+
+      if (shouldHaveGift && !giftInfo.hasGift) {
+        this._isSyncingGift = true;
+        try {
+          const vId = await this._getGiftVariantId();
+          if (vId) {
+            await window.fetch('/cart/add.js', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+              credentials: 'same-origin',
+              body: JSON.stringify({
+                items: [
+                  {
+                    id: vId,
+                    quantity: 1,
+                    properties: {
+                      '_mascot_gift': 'true',
+                      'Milestone Reward': this.tier2Reward || 'Tier 2 Free Gift 🎁',
+                    },
+                  },
+                ],
+              }),
+            });
+            this._hasGiftInCart = true;
+            this.dispatchEvent(new CustomEvent('mascot:gift_added', {
+              detail: { variantId: vId, reward: this.tier2Reward },
+              bubbles: true,
+              composed: true,
+            }));
+          }
+        } catch (_) {
+        } finally {
+          this._isSyncingGift = false;
+        }
+      } else if (!shouldHaveGift && giftInfo.hasGift) {
+        this._isSyncingGift = true;
+        try {
+          const changePayload = giftInfo.line > 0
+            ? { line: giftInfo.line, quantity: 0 }
+            : { id: giftInfo.variantId, quantity: 0 };
+          await window.fetch('/cart/change.js', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify(changePayload),
+          });
+          this._hasGiftInCart = false;
+          this.dispatchEvent(new CustomEvent('mascot:gift_removed', {
+            bubbles: true,
+            composed: true,
+          }));
+        } catch (_) {
+        } finally {
+          this._isSyncingGift = false;
+        }
+      }
     }
 
     _handleBlockSelect(e) {
@@ -1256,11 +1522,15 @@
 
     // --- Cart Mutations & Multi-tier Calculations ---
     processCartUpdate(payload = {}, actionType = 'refresh') {
+      if (this._isSyncingGift) return;
+
       const prevTotal = this._cartTotalDollars;
       const prevCount = this._itemCount;
 
       this._cartTotalDollars = Math.max(0, this._extractTotal(payload, actionType, prevTotal));
       this._itemCount = Math.max(0, this._extractCount(payload, actionType, prevCount));
+
+      const items = Array.isArray(payload.items) ? payload.items : null;
 
       if (this._isControlGroup) {
         if (this._cartTotalDollars > prevTotal) {
@@ -1269,7 +1539,12 @@
         return;
       }
 
-      const status = this._calculateTierStatus();
+      const status = this._calculateTierStatus(items);
+      if (status.activeDiscountCode) {
+        this._syncCheckoutDiscounts(status.activeDiscountCode);
+      }
+      this._syncGift(status.shouldHaveGift, items);
+
       const isRemoval =
         actionType === 'clear' ||
         this._cartTotalDollars < prevTotal - 0.005 ||
@@ -1277,23 +1552,34 @@
 
       if (isRemoval) {
         const msg = status.isAllUnlocked
-          ? 'All VIP Rewards Unlocked! 👑'
-          : `Add ${this.currencySymbol}${this._formatAmount(status.remainingToNext)} more for ${status.nextReward}!`;
-        this.sad(msg, { badge: 'Item Removed', showMeter: true });
+          ? `All VIP Rewards Unlocked! 👑 Free Shipping, Gift in Cart & ${this.tier3DiscountCode} applied!`
+          : (status.currentTierAchieved > 0
+              ? `${status.lastUnlockedReward} Active! Add ${this.currencySymbol}${this._formatAmount(status.remainingToNext)} for ${status.nextReward}!`
+              : `Add ${this.currencySymbol}${this._formatAmount(status.remainingToNext)} more for ${status.nextReward}!`);
+        this.sad(msg, { badge: 'Cart Updated', showMeter: true });
         return;
       }
 
       if (status.isAllUnlocked && prevTotal < (this.tier3Threshold || this.tier1Threshold)) {
         const reward = this.tier3Reward || this.tier1Reward;
-        this.celebrate(`All Rewards Unlocked! You're a VIP! 👑🎉`, { badge: 'Top Tier VIP', showMeter: true });
-        this.dispatchEvent(new CustomEvent('mascot:milestone_reached', { detail: { tier: 'VIP', reward } }));
+        const discountMsg = this.tier3DiscountCode ? ` (${this.tier3DiscountCode} applied)` : '';
+        this.celebrate(`All Rewards Unlocked! You're a VIP! 👑 Free Shipping, Mystery Gift 🎁 in cart & 15% OFF${discountMsg} applied at checkout! 🎉`, { badge: 'Top Tier VIP', showMeter: true });
+        this.dispatchEvent(new CustomEvent('mascot:milestone_reached', { detail: { tier: 'VIP', reward, discountCode: this.tier3DiscountCode } }));
         this._sendTelemetry('milestone', { label: `VIP Unlocked (${reward})`, revenue: this._cartTotalDollars });
         this._firePixelEvent('MascotMilestoneReached', { tier: 'VIP', reward, value: this._cartTotalDollars, currency: 'USD' });
-      } else if (status.currentTierAchieved > 0 && this._cartTotalDollars >= prevTotal) {
-        this.celebrate(`${status.lastUnlockedReward} Unlocked! 🎉`, { badge: 'Milestone Reached', showMeter: true });
-        this.dispatchEvent(new CustomEvent('mascot:milestone_reached', { detail: { tier: status.currentTierAchieved, reward: status.lastUnlockedReward } }));
+      } else if (status.currentTierAchieved === 2 && prevTotal < this.tier2Threshold) {
+        this.celebrate(`${status.lastUnlockedReward} Added to Cart! 🎁 Free Shipping applied! Add ${this.currencySymbol}${this._formatAmount(status.remainingToNext)} for VIP 15% OFF!`, { badge: 'Free Gift Unlocked', showMeter: true });
+        this.dispatchEvent(new CustomEvent('mascot:milestone_reached', { detail: { tier: 2, reward: status.lastUnlockedReward } }));
         this._sendTelemetry('milestone', { label: `${status.lastUnlockedReward} Unlocked`, revenue: this._cartTotalDollars });
-        this._firePixelEvent('MascotMilestoneReached', { tier: status.currentTierAchieved, reward: status.lastUnlockedReward, value: this._cartTotalDollars, currency: 'USD' });
+        this._firePixelEvent('MascotMilestoneReached', { tier: 2, reward: status.lastUnlockedReward, value: this._cartTotalDollars, currency: 'USD' });
+      } else if (status.currentTierAchieved === 1 && prevTotal < this.tier1Threshold) {
+        const shipHint = this.tier1DiscountCode ? ` (Code: ${this.tier1DiscountCode} applied)` : '';
+        this.celebrate(`${status.lastUnlockedReward} Unlocked! 🚚${shipHint} Add ${this.currencySymbol}${this._formatAmount(status.remainingToNext)} for ${status.nextReward}!`, { badge: 'Free Shipping Unlocked', showMeter: true });
+        this.dispatchEvent(new CustomEvent('mascot:milestone_reached', { detail: { tier: 1, reward: status.lastUnlockedReward, discountCode: this.tier1DiscountCode } }));
+        this._sendTelemetry('milestone', { label: `${status.lastUnlockedReward} Unlocked`, revenue: this._cartTotalDollars });
+        this._firePixelEvent('MascotMilestoneReached', { tier: 1, reward: status.lastUnlockedReward, value: this._cartTotalDollars, currency: 'USD' });
+      } else if (status.currentTierAchieved > 0 && this._cartTotalDollars >= prevTotal) {
+        this.celebrate(`${status.lastUnlockedReward} Active! 🎉 Add ${this.currencySymbol}${this._formatAmount(status.remainingToNext)} for ${status.nextReward}!`, { badge: 'Milestone Active', showMeter: true });
       } else if (actionType === 'add') {
         this.celebrate(`Add ${this.currencySymbol}${this._formatAmount(status.remainingToNext)} more for ${status.nextReward}!`, {
           badge: 'Added to Cart',
@@ -1347,9 +1633,16 @@
 
     _getShippingMessage() {
       const status = this._calculateTierStatus();
-      return status.isAllUnlocked
-        ? `All Rewards Unlocked! 👑🎉`
-        : `Add ${this.currencySymbol}${this._formatAmount(status.remainingToNext)} more for ${status.nextReward}!`;
+      if (status.isAllUnlocked) {
+        return `All Rewards Unlocked! 👑 Free Shipping, Mystery Gift 🎁 in cart & 15% OFF applied at checkout! 🎉`;
+      }
+      if (status.currentTierAchieved === 2) {
+        return `Mystery Gift 🎁 in Cart & Free Shipping! Add ${this.currencySymbol}${this._formatAmount(status.remainingToNext)} more for VIP 15% OFF!`;
+      }
+      if (status.currentTierAchieved === 1) {
+        return `Free Shipping Active! 🚚 Add ${this.currencySymbol}${this._formatAmount(status.remainingToNext)} more for Mystery Gift 🎁!`;
+      }
+      return `Add ${this.currencySymbol}${this._formatAmount(status.remainingToNext)} more for ${status.nextReward}!`;
     }
 
     _handleFetchIntercepted(url, data) {
@@ -1405,6 +1698,8 @@
         if (sessionStorage.getItem(SESSION_EXIT_KEY)) return;
         sessionStorage.setItem(SESSION_EXIT_KEY, '1');
       } catch (_) {}
+
+      this._syncCheckoutDiscounts(this.exitDiscountCode);
 
       MascotAnalytics.record('exitOffersShown', 1);
 
@@ -1601,6 +1896,7 @@
       });
 
       this._exitCtaBtn.addEventListener('click', () => {
+        this._syncCheckoutDiscounts(this.exitDiscountCode);
         this._firePixelEvent('MascotDiscountClaimed', {
           code: this.exitDiscountCode,
           value: this._cartTotalDollars,

@@ -267,6 +267,18 @@ setTimeout(async () => {
     assert(fs.existsSync(fnTomlPath), 'Shopify Functions shopify.extension.toml exists');
     assert(fs.existsSync(fnJsPath), 'Shopify Functions WASM execution logic (src/run.js) exists');
 
+    // 5. Section 5.1.2 Storefront Checkout Rewards Verification
+    console.log('\n5. Verifying Section 5.1.2 Storefront Checkout Rewards & Extension Sync...');
+    const widgetSource = fs.readFileSync(widgetPath, 'utf8');
+    const extWidgetSource = fs.readFileSync(extWidgetPath, 'utf8');
+    assert(widgetSource === extWidgetSource, 'Root mascot-widget.js and extension mascot-widget.js are 100% identical');
+    assert(widgetSource.includes('_syncCheckoutDiscounts'), 'Widget includes _syncCheckoutDiscounts for auto-applying codes at checkout');
+    assert(widgetSource.includes('_syncGift'), 'Widget includes _syncGift for auto-adding free gifts via /cart/add.js');
+    assert(widgetSource.includes('tier1-discount-code') && widgetSource.includes('tier3-discount-code'), 'Widget observes tier1 and tier3 checkout discount codes');
+    assert(liquidContent.includes('tier1_discount_code'), 'Liquid schema includes tier1_discount_code setting');
+    assert(liquidContent.includes('tier2_gift_product'), 'Liquid schema includes tier2_gift_product setting');
+    assert(liquidContent.includes('tier3_discount_code'), 'Liquid schema includes tier3_discount_code setting');
+
     console.log('\n======================================================');
     if (failures === 0) {
       console.log('🎉 ALL COMPLIANCE & QUALITY AUDITS PASSED 100%!');
