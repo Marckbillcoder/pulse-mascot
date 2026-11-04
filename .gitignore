@@ -6,3 +6,5 @@ node_modules/
 dist/
 .shopify/
 data/tokens.json
+push_to_github.cmd
+deploy.cmd
