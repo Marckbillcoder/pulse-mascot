@@ -915,12 +915,13 @@
       this._handleResize();
       this._startTrackingLoop();
       this._hydrateFromLiquid();
+      this._loadStoreSettings();
 
       // Theme Editor Design Mode Detection
       if (typeof window !== 'undefined' && window.Shopify && window.Shopify.designMode) {
         this.setAttribute('data-editor-selected', 'true');
         setTimeout(() => {
-          this.nudge(`Welcome! ⚡ Rewards Preview: Free Shipping ($${this.tier1Threshold}), Mystery Gift ($${this.tier2Threshold}), VIP 15% OFF ($${this.tier3Threshold})!`, {
+          this.nudge(`Welcome! ⚡ Rewards: ${this.tier1Reward} ($${this.tier1Threshold}), ${this.tier2Reward} ($${this.tier2Threshold}), ${this.tier3Reward} ($${this.tier3Threshold})!`, {
             badge: 'Theme Editor Preview',
             duration: 0,
             showMeter: true,
@@ -1016,7 +1017,11 @@
     get exitDiscountCode() { return this.getAttribute('exit-discount-code') || 'SAVE10'; }
     get exitDiscountPercent() { return this.getAttribute('exit-discount-percent') || '10%'; }
     get exitDiscountText() {
-      return this.getAttribute('exit-discount-text') || `Wait! Don't leave empty-handed 🥺 Take ${this.exitDiscountPercent} OFF!`;
+      const custom = this.getAttribute('exit-discount-text');
+      if (custom && (!custom.includes('Take 10% OFF!') || this.exitDiscountPercent === '10%')) {
+        return custom;
+      }
+      return `Wait! Don't leave empty-handed 🥺 Take ${this.exitDiscountPercent} OFF with code ${this.exitDiscountCode}!`;
     }
 
     get appName() { return this.getAttribute('app-name') || 'PulseMascot'; }
@@ -1059,6 +1064,70 @@
       }
     }
 
+    // --- Dynamic Storefront & App Settings Synchronization (Section 5.1.2) ---
+    async _loadStoreSettings() {
+      try {
+        const shop = this.getAttribute('shop-domain') ||
+          (typeof window !== 'undefined' && window.Shopify && window.Shopify.shop) || '';
+        const apiUrl = this.getAttribute('api-url') ||
+          (typeof window !== 'undefined' && window.__PULSE_MASCOT_API_URL__) ||
+          'https://pulse-mascot.onrender.com';
+
+        const endpoints = [
+          `${apiUrl}/api/settings?shop=${encodeURIComponent(shop)}`,
+          `/api/settings?shop=${encodeURIComponent(shop)}`
+        ];
+
+        let settings = null;
+        for (const ep of endpoints) {
+          try {
+            const res = await fetch(ep, { headers: { 'Accept': 'application/json' } });
+            if (res.ok) {
+              const data = await res.json();
+              if (data && (data.tier1Threshold || data.tier1DiscountCode || data.exitDiscountCode)) {
+                settings = data;
+                break;
+              }
+            }
+          } catch (_) {}
+        }
+
+        if (settings) {
+          this._applyServerSettings(settings);
+        }
+      } catch (err) {
+        console.debug('[PulseMascot] Theme fallback settings active:', err);
+      }
+    }
+
+    _applyServerSettings(s) {
+      if (!s || typeof s !== 'object') return;
+      if (s.tier1Threshold) this.setAttribute('tier1-threshold', s.tier1Threshold);
+      if (s.tier1Reward) this.setAttribute('tier1-reward', s.tier1Reward);
+      if (s.tier1DiscountCode) this.setAttribute('tier1-discount-code', s.tier1DiscountCode);
+
+      if (typeof s.tier2Threshold !== 'undefined') this.setAttribute('tier2-threshold', s.tier2Threshold);
+      if (s.tier2Reward) this.setAttribute('tier2-reward', s.tier2Reward);
+      if (s.tier2DiscountCode) this.setAttribute('tier2-discount-code', s.tier2DiscountCode);
+
+      if (typeof s.tier3Threshold !== 'undefined') this.setAttribute('tier3-threshold', s.tier3Threshold);
+      if (s.tier3Reward) this.setAttribute('tier3-reward', s.tier3Reward);
+      if (s.tier3DiscountCode) this.setAttribute('tier3-discount-code', s.tier3DiscountCode);
+
+      if (s.exitDiscountCode) this.setAttribute('exit-discount-code', s.exitDiscountCode);
+      if (s.exitDiscountPercent) this.setAttribute('exit-discount-percent', s.exitDiscountPercent);
+      if (s.exitDiscountText) this.setAttribute('exit-discount-text', s.exitDiscountText);
+
+      if (s.persona) this.setAttribute('persona', s.persona);
+      if (typeof s.enableSound !== 'undefined') this.setAttribute('enable-sound', String(s.enableSound));
+      if (typeof s.enableExitIntent !== 'undefined') this.setAttribute('enable-exit-intent', String(s.enableExitIntent));
+
+      this._syncAttributes();
+      if (this._itemCount > 0) {
+        this._renderHydratedCartState(false);
+      }
+    }
+
     _renderHydratedCartState(allowConfetti = false, items = null) {
       const status = this._calculateTierStatus(items);
       if (status.activeDiscountCode) {
@@ -1069,7 +1138,7 @@
       if (status.isAllUnlocked) {
         const discountHint = this.tier3DiscountCode ? ` (${this.tier3DiscountCode} applied)` : '';
         this.setState(STATES.CELEBRATE, {
-          message: `All Rewards Unlocked! You're a VIP! 👑 Free Shipping, Mystery Gift 🎁 in cart & 15% OFF${discountHint} applied at checkout! 🎉`,
+          message: `All Rewards Unlocked! You're a VIP! 👑 ${this.tier1Reward}, ${this.tier2Reward} in cart & ${this.tier3Reward}${discountHint} applied at checkout! 🎉`,
           badge: 'VIP Status Unlocked',
           confetti: allowConfetti,
           sound: allowConfetti,
@@ -1563,12 +1632,13 @@
       if (status.isAllUnlocked && prevTotal < (this.tier3Threshold || this.tier1Threshold)) {
         const reward = this.tier3Reward || this.tier1Reward;
         const discountMsg = this.tier3DiscountCode ? ` (${this.tier3DiscountCode} applied)` : '';
-        this.celebrate(`All Rewards Unlocked! You're a VIP! 👑 Free Shipping, Mystery Gift 🎁 in cart & 15% OFF${discountMsg} applied at checkout! 🎉`, { badge: 'Top Tier VIP', showMeter: true });
+        this.celebrate(`All Rewards Unlocked! You're a VIP! 👑 ${this.tier1Reward}, ${this.tier2Reward} in cart & ${reward}${discountMsg} applied at checkout! 🎉`, { badge: 'Top Tier VIP', showMeter: true });
         this.dispatchEvent(new CustomEvent('mascot:milestone_reached', { detail: { tier: 'VIP', reward, discountCode: this.tier3DiscountCode } }));
         this._sendTelemetry('milestone', { label: `VIP Unlocked (${reward})`, revenue: this._cartTotalDollars });
         this._firePixelEvent('MascotMilestoneReached', { tier: 'VIP', reward, value: this._cartTotalDollars, currency: 'USD' });
       } else if (status.currentTierAchieved === 2 && prevTotal < this.tier2Threshold) {
-        this.celebrate(`${status.lastUnlockedReward} Added to Cart! 🎁 Free Shipping applied! Add ${this.currencySymbol}${this._formatAmount(status.remainingToNext)} for VIP 15% OFF!`, { badge: 'Free Gift Unlocked', showMeter: true });
+        const shipHint = this.tier1DiscountCode ? ` (${this.tier1DiscountCode} applied)` : '';
+        this.celebrate(`${status.lastUnlockedReward} Added to Cart! 🎁${shipHint} Add ${this.currencySymbol}${this._formatAmount(status.remainingToNext)} for ${status.nextReward}!`, { badge: 'Free Gift Unlocked', showMeter: true });
         this.dispatchEvent(new CustomEvent('mascot:milestone_reached', { detail: { tier: 2, reward: status.lastUnlockedReward } }));
         this._sendTelemetry('milestone', { label: `${status.lastUnlockedReward} Unlocked`, revenue: this._cartTotalDollars });
         this._firePixelEvent('MascotMilestoneReached', { tier: 2, reward: status.lastUnlockedReward, value: this._cartTotalDollars, currency: 'USD' });

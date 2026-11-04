@@ -3,15 +3,21 @@
   "enableSound": true,
   "tier1Threshold": 60,
   "tier1Reward": "Free Express Shipping",
+  "tier1DiscountCode": "FREESHIP",
   "tier2Threshold": 80,
   "tier2Reward": "Mystery Gift 🎁",
+  "tier2DiscountCode": "FREEGIFT",
   "tier3Threshold": 120,
   "tier3Reward": "VIP 15% OFF 👑",
+  "tier3DiscountCode": "VIP15",
   "enableExitIntent": true,
   "exitDiscountCode": "VIP10",
   "exitDiscountPercent": "10%",
+  "exitDiscountText": "Wait! Don't leave empty-handed 🥺 Take 10% OFF!",
   "position": "bottom-right",
   "offsetX": 24,
   "offsetY": 24,
-  "showBranding": true
+  "showBranding": true,
+  "enablePixelBridge": true,
+  "enableAiPersonalization": true
 }

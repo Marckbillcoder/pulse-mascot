@@ -7,6 +7,8 @@
 <store-mascot
   id="store-mascot-{{ block.id }}"
   data-shopify-block-id="{{ block.id }}"
+  api-url="https://pulse-mascot.onrender.com"
+  shop-domain="{{ shop.permanent_domain }}"
   persona="{{ block.settings.persona | default: 'orb' }}"
   enable-sound="{{ block.settings.enable_sound }}"
   free-shipping-threshold="{{ block.settings.tier1_threshold | default: 50 }}"

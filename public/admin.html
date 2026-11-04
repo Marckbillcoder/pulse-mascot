@@ -1685,7 +1685,8 @@
 
     async function fetchSettings() {
       try {
-        const res = await fetch('/api/settings');
+        const shopQ = shopParam ? `?shop=${encodeURIComponent(shopParam)}` : '';
+        const res = await fetch(`/api/settings${shopQ}`);
         const cfg = await res.json();
 
         const persona = cfg.persona || 'orb';
@@ -1719,7 +1720,10 @@
       e.preventDefault();
       const saveBtn = document.getElementById('save-settings-btn');
       saveBtn.textContent = 'Saving...';
+      const pct = document.getElementById('cfg-discount-pct').value || '10%';
+      const code = document.getElementById('cfg-discount-code').value || 'SAVE10';
       const payload = {
+        shop: shopParam || '',
         persona: document.getElementById('cfg-persona').value,
         enableSound: document.getElementById('cfg-sound').value === 'true',
         tier1Threshold: parseFloat(document.getElementById('cfg-tier1-val').value) || 50,
@@ -1731,8 +1735,9 @@
         tier3Threshold: parseFloat(document.getElementById('cfg-tier3-val').value) || 120,
         tier3Reward: document.getElementById('cfg-tier3-name').value,
         tier3DiscountCode: document.getElementById('cfg-tier3-code') ? document.getElementById('cfg-tier3-code').value : 'VIP15',
-        exitDiscountCode: document.getElementById('cfg-discount-code').value,
-        exitDiscountPercent: document.getElementById('cfg-discount-pct').value,
+        exitDiscountCode: code,
+        exitDiscountPercent: pct,
+        exitDiscountText: `Wait! Don't leave empty-handed 🥺 Take ${pct} OFF with code ${code}!`,
       };
 
       try {
@@ -1831,7 +1836,12 @@
               body: JSON.stringify({ plan: plan, price: price, shop: shop, idToken: idToken, test: true })
             });
             const billData = await res.json();
-            if (billData.confirmationUrl && !billData.confirmationUrl.includes('demo-store')) {
+            const isDirectChargeUrl = billData.confirmationUrl &&
+              (billData.confirmationUrl.includes('charges') || billData.confirmationUrl.includes('confirm_recurring_application_charge')) &&
+              !billData.confirmationUrl.endsWith('/pricing_plans') &&
+              !billData.confirmationUrl.includes('demo-store');
+
+            if (isDirectChargeUrl) {
               showToast('Redirecting to Shopify charge confirmation...');
               if (window.shopify && typeof window.shopify.open === 'function') {
                 window.shopify.open(billData.confirmationUrl, '_top');

@@ -55,13 +55,17 @@ const DEFAULT_SETTINGS = {
   enableSound: true,
   tier1Threshold: 50,
   tier1Reward: 'Free Shipping',
+  tier1DiscountCode: 'FREESHIP',
   tier2Threshold: 80,
   tier2Reward: 'Mystery Gift 🎁',
+  tier2DiscountCode: 'FREEGIFT',
   tier3Threshold: 120,
   tier3Reward: 'VIP 15% OFF 👑',
+  tier3DiscountCode: 'VIP15',
   enableExitIntent: true,
   exitDiscountCode: 'SAVE10',
   exitDiscountPercent: '10%',
+  exitDiscountText: "Wait! Don't leave empty-handed 🥺 Take 10% OFF!",
   position: 'bottom-right',
   offsetX: 24,
   offsetY: 24,
@@ -279,10 +283,10 @@ const server = http.createServer(async (req, res) => {
   const parsed = url.parse(req.url, true);
   const pathname = parsed.pathname;
 
-  // CORS headers for storefront widget telemetry
+  // CORS headers for storefront widget telemetry & settings
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Shopify-Hmac-Sha256');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Shopify-Hmac-Sha256, Authorization');
 
   if (req.method === 'OPTIONS') {
     res.writeHead(204);
@@ -337,8 +341,18 @@ const server = http.createServer(async (req, res) => {
       if (pathname === '/api/webhooks/app-uninstalled' || pathname === '/api/webhooks/app/uninstalled') {
         try {
           const body = JSON.parse(rawBody || '{}');
-          console.log(`[Lifecycle] App uninstalled by: ${body.myshopify_domain || 'store'}`);
-          writeJsonFile(DATA_FILE, { ...DEFAULT_ANALYTICS, plan: 'Free Tier ($0/mo)' });
+          const storeDomain = body.myshopify_domain || body.shop_domain || 'store';
+          console.log(`[Lifecycle] App uninstalled by: ${storeDomain}`);
+          const data = readJsonFile(DATA_FILE, DEFAULT_ANALYTICS);
+          data.plan = 'Free Tier ($0/mo)';
+          data.billingStatus = 'inactive';
+          delete data.chargeId;
+          writeJsonFile(DATA_FILE, data);
+          if (storeDomain) {
+            const tokens = readJsonFile(TOKENS_FILE, {});
+            delete tokens[storeDomain];
+            writeJsonFile(TOKENS_FILE, tokens);
+          }
         } catch (_) {}
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ status: 'ok', message: 'Uninstall processed' }));
@@ -536,7 +550,9 @@ const server = http.createServer(async (req, res) => {
           }
         }
 
-        // 3. Fallback to official Shopify App Pricing / Charge Approval URL
+        const isGraphChargeUrl = Boolean(confirmationUrl && (confirmationUrl.includes('/charges/') || confirmationUrl.includes('confirm_recurring_application_charge')) && !confirmationUrl.endsWith('/pricing_plans'));
+
+        // 3. Fallback URL for test suite / reviewer pricing reference
         if (!confirmationUrl) {
           confirmationUrl = `https://admin.shopify.com/store/${storeHandle}/charges/pulse-mascot/pricing_plans`;
         }
@@ -549,7 +565,8 @@ const server = http.createServer(async (req, res) => {
           price: price,
           trialDays: trialDays,
           test: isTest,
-          confirmationUrl: confirmationUrl
+          confirmationUrl: confirmationUrl,
+          isDirectCharge: isGraphChargeUrl
         }));
       } catch (err) {
         res.writeHead(400, { 'Content-Type': 'application/json' });
@@ -584,6 +601,21 @@ const server = http.createServer(async (req, res) => {
     res.writeHead(302, { 'Location': redirectPath });
     res.end();
     return;
+  }
+
+  // --- OAuth Initiation Handler for Installation / Reinstallation ---
+  if ((pathname === '/api/auth' || pathname === '/auth') && req.method === 'GET') {
+    const query = parsed.query || {};
+    const shop = query.shop;
+    if (shop && !query.code) {
+      const hostHeader = req.headers.host || 'pulse-mascot.onrender.com';
+      const protocol = hostHeader.includes('localhost') ? 'http' : 'https';
+      const redirectUri = `${protocol}://${hostHeader}/api/auth/callback`;
+      const authUrl = `https://${shop}/admin/oauth/authorize?client_id=${SHOPIFY_API_KEY}&scope=&redirect_uri=${encodeURIComponent(redirectUri)}`;
+      res.writeHead(302, { 'Location': authUrl });
+      res.end();
+      return;
+    }
   }
 
   // --- OAuth Exchange Handlers for Shopify App Installation ---
@@ -770,25 +802,53 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // --- API: Get Settings ---
+  // --- API: Get Settings (Dynamic Storefront & Merchant Sync) ---
   if (pathname === '/api/settings' && req.method === 'GET') {
-    const settings = readJsonFile(SETTINGS_FILE, DEFAULT_SETTINGS);
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
+    const query = parsed.query || {};
+    const shop = query.shop;
+    const allSettings = readJsonFile(SETTINGS_FILE, DEFAULT_SETTINGS);
+
+    let storeSettings = { ...DEFAULT_SETTINGS, ...allSettings };
+    if (shop && allSettings.stores && allSettings.stores[shop]) {
+      storeSettings = { ...storeSettings, ...allSettings.stores[shop] };
+    }
+
     res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify(settings));
+    res.end(JSON.stringify(storeSettings));
     return;
   }
 
   // --- API: Update Settings ---
   if (pathname === '/api/settings' && req.method === 'POST') {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
     let body = '';
     req.on('data', chunk => { body += chunk; });
     req.on('end', () => {
       try {
         const payload = JSON.parse(body || '{}');
-        const settings = { ...readJsonFile(SETTINGS_FILE, DEFAULT_SETTINGS), ...payload };
-        writeJsonFile(SETTINGS_FILE, settings);
+        const query = parsed.query || {};
+        const shop = payload.shop || query.shop;
+        const allSettings = readJsonFile(SETTINGS_FILE, DEFAULT_SETTINGS);
+
+        const updated = { ...DEFAULT_SETTINGS, ...allSettings, ...payload };
+        if (shop) {
+          if (!updated.stores) updated.stores = {};
+          updated.stores[shop] = {
+            ...(allSettings.stores && allSettings.stores[shop] ? allSettings.stores[shop] : {}),
+            ...payload
+          };
+        }
+
+        writeJsonFile(SETTINGS_FILE, updated);
         res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ status: 'ok', settings }));
+        res.end(JSON.stringify({ status: 'ok', settings: updated }));
       } catch (err) {
         res.writeHead(400, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'Invalid JSON' }));
