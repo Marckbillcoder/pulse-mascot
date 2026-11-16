@@ -290,6 +290,8 @@ setTimeout(async () => {
     assert(widgetSource.includes('_syncCheckoutDiscounts'), 'Widget includes _syncCheckoutDiscounts for auto-applying codes at checkout');
     assert(widgetSource.includes('_syncGift'), 'Widget includes _syncGift for auto-adding free gifts via /cart/add.js');
     assert(widgetSource.includes('tier1-discount-code') && widgetSource.includes('tier3-discount-code'), 'Widget observes tier1 and tier3 checkout discount codes');
+    assert(widgetSource.includes('_setupCartPageAbandonmentTracker'), 'Widget includes _setupCartPageAbandonmentTracker for cart page exit-intent recovery');
+    assert(widgetSource.includes('cart:refresh') && widgetSource.includes('cart:updated'), 'Widget dispatches standard Shopify theme cart:refresh & cart:updated events');
     assert(liquidContent.includes('tier1_discount_code'), 'Liquid schema includes tier1_discount_code setting');
     assert(liquidContent.includes('tier2_gift_product'), 'Liquid schema includes tier2_gift_product setting');
     assert(liquidContent.includes('tier3_discount_code'), 'Liquid schema includes tier3_discount_code setting');

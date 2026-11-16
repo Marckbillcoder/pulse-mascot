@@ -909,7 +909,7 @@
                       <label class="form-label" for="cfg-tier1-val">Cart Goal ($)</label>
                       <div class="input-prefix-wrapper">
                         <span class="input-prefix">$</span>
-                        <input class="form-input input-with-prefix" type="number" id="cfg-tier1-val" value="50" min="5" />
+                        <input class="form-input input-with-prefix" type="number" id="cfg-tier1-val" value="50" min="0" />
                       </div>
                     </div>
                     <div class="form-group" style="margin-bottom: 0;">
@@ -921,7 +921,7 @@
                       <input class="form-input" type="text" id="cfg-tier1-code" value="FREESHIP" />
                     </div>
                   </div>
-                  <div class="form-help">When cart reaches $50, mascot cheers and applies discount code <code>FREESHIP</code> to checkout.</div>
+                  <div class="form-help">When cart reaches threshold, mascot cheers and applies discount code to checkout (set 0 to disable).</div>
                 </div>
 
                 <!-- Tier 2: Free Gift -->
@@ -935,7 +935,7 @@
                       <label class="form-label" for="cfg-tier2-val">Cart Goal ($)</label>
                       <div class="input-prefix-wrapper">
                         <span class="input-prefix">$</span>
-                        <input class="form-input input-with-prefix" type="number" id="cfg-tier2-val" value="80" min="10" />
+                        <input class="form-input input-with-prefix" type="number" id="cfg-tier2-val" value="80" min="0" />
                       </div>
                     </div>
                     <div class="form-group" style="margin-bottom: 0;">
@@ -947,7 +947,7 @@
                       <input class="form-input" type="text" id="cfg-tier2-code" value="FREEGIFT" />
                     </div>
                   </div>
-                  <div class="form-help">When cart reaches $80, mascot automatically adds the complimentary gift item into the cart.</div>
+                  <div class="form-help">When cart reaches threshold, mascot automatically adds the complimentary gift item into the cart (set 0 to disable).</div>
                 </div>
 
                 <!-- Tier 3: VIP Discount -->
@@ -961,7 +961,7 @@
                       <label class="form-label" for="cfg-tier3-val">Cart Goal ($)</label>
                       <div class="input-prefix-wrapper">
                         <span class="input-prefix">$</span>
-                        <input class="form-input input-with-prefix" type="number" id="cfg-tier3-val" value="120" min="20" />
+                        <input class="form-input input-with-prefix" type="number" id="cfg-tier3-val" value="120" min="0" />
                       </div>
                     </div>
                     <div class="form-group" style="margin-bottom: 0;">
@@ -1693,26 +1693,26 @@
         selectPersona(persona);
 
         document.getElementById('cfg-sound').value = String(cfg.enableSound !== false);
-        document.getElementById('cfg-tier1-val').value = cfg.tier1Threshold || 50;
+        document.getElementById('cfg-tier1-val').value = typeof cfg.tier1Threshold !== 'undefined' ? cfg.tier1Threshold : 50;
         document.getElementById('cfg-tier1-name').value = cfg.tier1Reward || 'Free Shipping';
-        if (cfg.tier1DiscountCode && document.getElementById('cfg-tier1-code')) {
-          document.getElementById('cfg-tier1-code').value = cfg.tier1DiscountCode;
+        if (document.getElementById('cfg-tier1-code')) {
+          document.getElementById('cfg-tier1-code').value = typeof cfg.tier1DiscountCode !== 'undefined' ? cfg.tier1DiscountCode : 'FREESHIP';
         }
 
-        document.getElementById('cfg-tier2-val').value = cfg.tier2Threshold || 80;
+        document.getElementById('cfg-tier2-val').value = typeof cfg.tier2Threshold !== 'undefined' ? cfg.tier2Threshold : 80;
         document.getElementById('cfg-tier2-name').value = cfg.tier2Reward || 'Mystery Gift 🎁';
-        if (cfg.tier2DiscountCode && document.getElementById('cfg-tier2-code')) {
-          document.getElementById('cfg-tier2-code').value = cfg.tier2DiscountCode;
+        if (document.getElementById('cfg-tier2-code')) {
+          document.getElementById('cfg-tier2-code').value = typeof cfg.tier2DiscountCode !== 'undefined' ? cfg.tier2DiscountCode : 'FREEGIFT';
         }
 
-        document.getElementById('cfg-tier3-val').value = cfg.tier3Threshold || 120;
+        document.getElementById('cfg-tier3-val').value = typeof cfg.tier3Threshold !== 'undefined' ? cfg.tier3Threshold : 120;
         document.getElementById('cfg-tier3-name').value = cfg.tier3Reward || 'VIP 15% OFF 👑';
-        if (cfg.tier3DiscountCode && document.getElementById('cfg-tier3-code')) {
-          document.getElementById('cfg-tier3-code').value = cfg.tier3DiscountCode;
+        if (document.getElementById('cfg-tier3-code')) {
+          document.getElementById('cfg-tier3-code').value = typeof cfg.tier3DiscountCode !== 'undefined' ? cfg.tier3DiscountCode : 'VIP15';
         }
 
-        document.getElementById('cfg-discount-code').value = cfg.exitDiscountCode || 'SAVE10';
-        document.getElementById('cfg-discount-pct').value = cfg.exitDiscountPercent || '10%';
+        document.getElementById('cfg-discount-code').value = typeof cfg.exitDiscountCode !== 'undefined' ? cfg.exitDiscountCode : 'SAVE10';
+        document.getElementById('cfg-discount-pct').value = typeof cfg.exitDiscountPercent !== 'undefined' ? cfg.exitDiscountPercent : '10%';
       } catch (_) {}
     }
 
@@ -1720,24 +1720,32 @@
       e.preventDefault();
       const saveBtn = document.getElementById('save-settings-btn');
       saveBtn.textContent = 'Saving...';
-      const pct = document.getElementById('cfg-discount-pct').value || '10%';
-      const code = document.getElementById('cfg-discount-code').value || 'SAVE10';
+      const pct = (document.getElementById('cfg-discount-pct').value || '').trim();
+      const code = (document.getElementById('cfg-discount-code').value || '').trim();
+
+      const rawT1 = (document.getElementById('cfg-tier1-val').value || '').trim();
+      const t1Val = rawT1 === '' ? 0 : (isNaN(parseFloat(rawT1)) ? 0 : parseFloat(rawT1));
+      const rawT2 = (document.getElementById('cfg-tier2-val').value || '').trim();
+      const t2Val = rawT2 === '' ? 0 : (isNaN(parseFloat(rawT2)) ? 0 : parseFloat(rawT2));
+      const rawT3 = (document.getElementById('cfg-tier3-val').value || '').trim();
+      const t3Val = rawT3 === '' ? 0 : (isNaN(parseFloat(rawT3)) ? 0 : parseFloat(rawT3));
+
       const payload = {
         shop: shopParam || '',
         persona: document.getElementById('cfg-persona').value,
         enableSound: document.getElementById('cfg-sound').value === 'true',
-        tier1Threshold: parseFloat(document.getElementById('cfg-tier1-val').value) || 50,
+        tier1Threshold: t1Val,
         tier1Reward: document.getElementById('cfg-tier1-name').value,
-        tier1DiscountCode: document.getElementById('cfg-tier1-code') ? document.getElementById('cfg-tier1-code').value : 'FREESHIP',
-        tier2Threshold: parseFloat(document.getElementById('cfg-tier2-val').value) || 80,
+        tier1DiscountCode: document.getElementById('cfg-tier1-code') ? document.getElementById('cfg-tier1-code').value.trim() : '',
+        tier2Threshold: t2Val,
         tier2Reward: document.getElementById('cfg-tier2-name').value,
-        tier2DiscountCode: document.getElementById('cfg-tier2-code') ? document.getElementById('cfg-tier2-code').value : 'FREEGIFT',
-        tier3Threshold: parseFloat(document.getElementById('cfg-tier3-val').value) || 120,
+        tier2DiscountCode: document.getElementById('cfg-tier2-code') ? document.getElementById('cfg-tier2-code').value.trim() : '',
+        tier3Threshold: t3Val,
         tier3Reward: document.getElementById('cfg-tier3-name').value,
-        tier3DiscountCode: document.getElementById('cfg-tier3-code') ? document.getElementById('cfg-tier3-code').value : 'VIP15',
+        tier3DiscountCode: document.getElementById('cfg-tier3-code') ? document.getElementById('cfg-tier3-code').value.trim() : '',
         exitDiscountCode: code,
         exitDiscountPercent: pct,
-        exitDiscountText: `Wait! Don't leave empty-handed 🥺 Take ${pct} OFF with code ${code}!`,
+        exitDiscountText: code && pct ? `Wait! Don't leave empty-handed 🥺 Take ${pct} OFF with code ${code}!` : '',
       };
 
       try {
