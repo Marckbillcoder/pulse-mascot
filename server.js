@@ -1014,6 +1014,16 @@ const server = http.createServer(async (req, res) => {
     }
   }
 
+  // --- Serve Apple-Level Cinematic Experience Page ---
+  if (pathname === '/apple-film' || pathname === '/experience' || pathname === '/film') {
+    const applePath = path.join(PUBLIC_DIR, 'apple-film.html');
+    if (fs.existsSync(applePath)) {
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=UTF-8' });
+      fs.createReadStream(applePath).pipe(res);
+      return;
+    }
+  }
+
   // --- Serve Embedded Admin App & Auth Endpoints (Shopify CSP Frame-Ancestors Compliant) ---
   if (
     pathname === '/' ||
