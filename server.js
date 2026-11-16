@@ -1122,6 +1122,9 @@ const server = http.createServer(async (req, res) => {
   let filePath = path.join(__dirname, pathname);
   if (pathname.startsWith('/public/')) filePath = path.join(__dirname, pathname);
   else if (pathname.startsWith('/assets/')) filePath = path.join(__dirname, 'extensions', 'store-mascot-ext', 'assets', pathname.replace('/assets/', ''));
+  else if (!fs.existsSync(filePath) && fs.existsSync(path.join(PUBLIC_DIR, pathname))) {
+    filePath = path.join(PUBLIC_DIR, pathname);
+  }
 
   if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
     const ext = path.extname(filePath).toLowerCase();
