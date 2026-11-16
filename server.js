@@ -260,6 +260,8 @@ const MIME_TYPES = {
   '.png': 'image/png',
   '.jpg': 'image/jpeg',
   '.ico': 'image/x-icon',
+  '.mp4': 'video/mp4',
+  '.webm': 'video/webm',
 };
 
 // Enterprise Telemetry Rate Limiter (Max 120 req/min per IP to prevent DDoS)
@@ -998,6 +1000,16 @@ const server = http.createServer(async (req, res) => {
     if (fs.existsSync(indexPath)) {
       res.writeHead(200, { 'Content-Type': 'text/html; charset=UTF-8' });
       fs.createReadStream(indexPath).pipe(res);
+      return;
+    }
+  }
+
+  // --- Serve Production Promo Video Studio ---
+  if (pathname === '/promo-video' || pathname === '/video' || pathname === '/promo') {
+    const videoStudioPath = path.join(PUBLIC_DIR, 'promo-video.html');
+    if (fs.existsSync(videoStudioPath)) {
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=UTF-8' });
+      fs.createReadStream(videoStudioPath).pipe(res);
       return;
     }
   }
