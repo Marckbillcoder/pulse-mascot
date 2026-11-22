@@ -11,16 +11,16 @@
   shop-domain="{{ shop.permanent_domain }}"
   persona="{{ block.settings.persona | default: 'orb' }}"
   enable-sound="{{ block.settings.enable_sound }}"
-  free-shipping-threshold="{% if block.settings.tier1_threshold != blank %}{{ block.settings.tier1_threshold }}{% endif %}"
-  tier1-threshold="{% if block.settings.tier1_threshold != blank %}{{ block.settings.tier1_threshold }}{% endif %}"
+  free-shipping-threshold="{% if block.settings.tier1_threshold != blank and block.settings.tier1_threshold > 0 %}{{ block.settings.tier1_threshold }}{% else %}0{% endif %}"
+  tier1-threshold="{% if block.settings.tier1_threshold != blank and block.settings.tier1_threshold > 0 %}{{ block.settings.tier1_threshold }}{% else %}0{% endif %}"
   tier1-reward="{{ block.settings.tier1_reward | escape }}"
   tier1-discount-code="{{ block.settings.tier1_discount_code | escape }}"
-  tier2-threshold="{% if block.settings.tier2_threshold != blank %}{{ block.settings.tier2_threshold }}{% endif %}"
+  tier2-threshold="{% if block.settings.tier2_threshold != blank and block.settings.tier2_threshold > 0 %}{{ block.settings.tier2_threshold }}{% else %}0{% endif %}"
   tier2-reward="{{ block.settings.tier2_reward | escape }}"
-  tier2-gift-variant-id="{{ block.settings.tier2_gift_product.selected_or_first_available_variant.id }}"
+  tier2-gift-variant-id="{{ block.settings.tier2_gift_product.selected_or_first_available_variant.id | default: block.settings.tier2_gift_product.first_available_variant.id | default: block.settings.tier2_gift_product.variants.first.id }}"
   tier2-gift-title="{{ block.settings.tier2_gift_product.title | escape }}"
   tier2-discount-code="{{ block.settings.tier2_discount_code | escape }}"
-  tier3-threshold="{% if block.settings.tier3_threshold != blank %}{{ block.settings.tier3_threshold }}{% endif %}"
+  tier3-threshold="{% if block.settings.tier3_threshold != blank and block.settings.tier3_threshold > 0 %}{{ block.settings.tier3_threshold }}{% else %}0{% endif %}"
   tier3-reward="{{ block.settings.tier3_reward | escape }}"
   tier3-discount-code="{{ block.settings.tier3_discount_code | escape }}"
   enable-exit-intent="{{ block.settings.enable_exit_intent }}"
@@ -95,6 +95,7 @@
       "type": "number",
       "id": "tier1_threshold",
       "label": "Tier 1 Threshold (Free Shipping)",
+      "info": "Minimum spend for Tier 1. Set to 0 or leave blank to disable Tier 1.",
       "default": 50
     },
     {
@@ -107,14 +108,14 @@
       "type": "text",
       "id": "tier1_discount_code",
       "label": "Tier 1 Checkout Discount Code",
-      "info": "Optional code auto-applied at checkout (default: FREESHIP). Leave blank if store has automated free shipping rate.",
-      "default": "FREESHIP"
+      "info": "Optional code auto-applied at checkout. Leave blank if store has automated free shipping rate.",
+      "default": ""
     },
     {
       "type": "number",
       "id": "tier2_threshold",
       "label": "Tier 2 Threshold (Free Gift)",
-      "info": "Set to 0 to disable Tier 2.",
+      "info": "Minimum spend for Tier 2. Set to 0 or leave blank to disable Tier 2.",
       "default": 80
     },
     {
@@ -133,14 +134,14 @@
       "type": "text",
       "id": "tier2_discount_code",
       "label": "Tier 2 Gift Discount Code",
-      "info": "Optional 100% discount code for the gift at checkout (default: FREEGIFT).",
-      "default": "FREEGIFT"
+      "info": "Optional discount code from Shopify Discounts (e.g. 100% off gift). Leave blank if gift product is already $0 or uses an Automatic Discount.",
+      "default": ""
     },
     {
       "type": "number",
       "id": "tier3_threshold",
       "label": "Tier 3 Threshold (VIP Discount Perk)",
-      "info": "Set to 0 to disable Tier 3.",
+      "info": "Minimum spend for Tier 3. Set to 0 or leave blank to disable Tier 3.",
       "default": 120
     },
     {
@@ -153,8 +154,8 @@
       "type": "text",
       "id": "tier3_discount_code",
       "label": "Tier 3 VIP Discount Code",
-      "info": "Discount code auto-applied at checkout when Tier 3 is reached (default: VIP15).",
-      "default": "VIP15"
+      "info": "Discount code auto-applied at checkout when Tier 3 is reached. Leave blank if no code.",
+      "default": ""
     },
     {
       "type": "header",

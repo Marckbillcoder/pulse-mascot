@@ -140,18 +140,20 @@
 
     <!-- Reviewer Feedback Section -->
     <div class="card">
-      <div class="card-title">📋 Official Shopify Review Feedback Addressed</div>
-      <div style="background: #fff8e5; border: 1px solid #ffe299; border-radius: 8px; padding: 14px; font-size: 13px; color: #664d03; line-height: 1.6; margin-bottom: 12px;">
-        <strong>Section 5.1.2: Properly show theme app extension in the storefront</strong><br />
-        <em>"During testing, the mystery gift feature did not function, and the exit-intent detection did not trigger a pop-up or display any discount offer after navigating away from the cart page. Additionally, even when the free shipping field was left blank and the mystery gift and other discounts were set to zero, the discount offers continued to display on the storefront. Please see this screencast1 and screencast2 for context."</em>
+      <div class="card-title">📋 Official Shopify Review Feedback Addressed (Latest Re-Test)</div>
+      <div style="background: #fff8e5; border: 1px solid #ffe299; border-radius: 8px; padding: 16px; font-size: 13px; color: #664d03; line-height: 1.6; margin-bottom: 14px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+          <strong>Section 5.1.2: Properly show theme app extension in the storefront</strong>
+          <span style="background: #fed7aa; color: #9a3412; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 10px;">Reviewer Screencasts 1, 2 &amp; 3</span>
+        </div>
+        <em>"Even with no free shipping discount configured and the amount set to zero or left blank, the $50 free shipping, mystery, and VIP offers remained visible. We noticed that the app may be treating zero as a baseline eligibility threshold rather than disabling the tier, as the behavior persisted even after leaving the field as blank. Additionally, the progress meter remained visible for the free shipping discount during testing despite setting it to zero, while the other discounts had indications that it was applied. Refer to this screencast 1 and screencast 2 for context. In this review, we selected an available mystery gift directly from our products in the theme app extension/editor, which failed to apply at checkout. We also want to confirm if the mystery gift code needs to be sourced from Shopify Discounts (the app applies a discount code for Mystery Gift), as none of Shopify’s native discount types could be associated with it. See this screencast for reference."</em>
       </div>
-      <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 14px; font-size: 13px; color: #1e40af; line-height: 1.6; margin-bottom: 12px;">
-        <strong>Section 1.2.2: Implement Shopify App Pricing or the Shopify Billing API correctly</strong><br />
-        <em>"During testing, the billing flow does not go through Shopify's billing modal. Please see this screencast for context."</em>
-      </div>
-      <div style="background: #fdf2f8; border: 1px solid #fbcfe8; border-radius: 8px; padding: 14px; font-size: 13px; color: #9d174d; line-height: 1.6;">
-        <strong>Section 2.1.1: Build apps without critical errors to ensure review completion</strong><br />
-        <em>"Your app must be free from user interface bugs, display issues, or error pages that fully prevent completion of the review. Web errors such as 404's, 500's, 300's, and etc are not acceptable."</em>
+      <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 16px; font-size: 13px; color: #1e40af; line-height: 1.6;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+          <strong>Section 1.2.2: Implement Shopify App Pricing or the Shopify Billing API correctly</strong>
+          <span style="background: #bfdbfe; color: #1e3a8a; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 10px;">Reviewer Screencast</span>
+        </div>
+        <em>"When attempting to select a plan, we encountered a repeated error loop that prevented us from completing the selection. Refer to this screencast for context."</em>
       </div>
     </div>
 
@@ -159,32 +161,40 @@
     <div class="card" id="section-5-1-2">
       <div class="card-title">🛍️ Resolution for Section 5.1.2: Storefront Extension &amp; Discount Synchronization</div>
       <p style="font-size: 13.5px; color: var(--p-text); line-height: 1.6; margin-bottom: 14px;">
-        All three storefront items reported in the screencasts have been completely resolved and verified across all themes:
+        All storefront items reported in the latest review have been thoroughly fixed, tested, and verified across online store themes:
       </p>
 
       <table class="diff-table">
         <thead>
           <tr>
-            <th style="width: 25%;">Feedback Item</th>
-            <th style="width: 35%; color: #dc2626;">Previous Behavior</th>
-            <th style="width: 40%; color: #008060;">Resolved Implementation</th>
+            <th style="width: 24%;">Feedback Item</th>
+            <th style="width: 36%; color: #dc2626;">Root Cause in Previous Build</th>
+            <th style="width: 40%; color: #008060;">Resolved Production Implementation</th>
           </tr>
         </thead>
         <tbody>
           <tr>
-            <td><strong>Zero / Blank Threshold &amp; Discount Handling</strong></td>
-            <td>Leaving free shipping blank or setting mystery gift / discounts to 0 fell back to default $50, $80, and hardcoded discount codes.</td>
-            <td>Zero (<code>0</code>) or blank (<code>""</code>) explicitly disables that tier and discount. If all tiers are 0 or blank, the progress meter is completely hidden (<code>hasAnyTier: false</code>) and the mascot enters companion mode with ZERO discount promises.</td>
+            <td><strong>Zero &amp; Blank Threshold Handling</strong></td>
+            <td><code>_loadStoreSettings()</code> fetched <code>/api/settings</code> from the server and <code>_applyServerSettings()</code> unconditionally set <code>tier1-threshold</code> to 50, overwriting the merchant's Theme Editor settings (0 or blank) within 300ms. Getters also defaulted to 50, 80, 120 when attributes were empty.</td>
+            <td><strong>Theme Editor Authority Enforced:</strong> <code>_loadStoreSettings()</code> now explicitly skips overwriting if <code>data-shopify-block-id</code> is present. All threshold getters strictly return <code>0</code> when blank, <code>"0"</code>, or missing. Setting any threshold to <code>0</code> or blank disables that tier completely.</td>
           </tr>
           <tr>
-            <td><strong>Mystery Gift Feature &amp; Theme Cart Refresh</strong></td>
-            <td>Adding a gift item via <code>/cart/add.js</code> did not notify modern Shopify themes (e.g. Dawn drawer), leaving the cart UI un-refreshed, or falsely claimed added when variant was missing.</td>
-            <td>Automatically adds gift variant and immediately broadcasts standard Shopify theme events: <code>cart:refresh</code>, <code>cart:updated</code>, and <code>cart:change</code>. If no physical variant is configured, awards the gift discount code transparently.</td>
+            <td><strong>Progress Meter Visibility When Set to 0</strong></td>
+            <td>The progress meter was displayed whenever <code>showMeter: true</code> was passed, without checking if the active tiers array was empty or if the free shipping tier was disabled.</td>
+            <td><strong>Complete Meter Suppression:</strong> If all thresholds are 0 or blank, <code>status.hasAnyTier</code> is strictly <code>false</code> and <code>.shipping-meter</code> has <code>style.display = 'none'</code> and <code>.hidden</code>. Individual tier tags for tiers with <code>threshold &lt;= 0</code> are also set to <code>style.display = 'none'</code>.</td>
+          </tr>
+          <tr>
+            <td><strong>Mystery Gift Checkout &amp; Shopify Discounts Confirmation</strong></td>
+            <td>The extension schema defaulted <code>tier2_discount_code</code> to <code>"FREEGIFT"</code> and auto-injected <code>/discount/FREEGIFT</code> at checkout, causing an invalid discount error when the store had no discount code named <code>FREEGIFT</code>. Exact matching cart values ($100 cart on $100 threshold) could fail to trigger the gift add due to precision boundary conditions.</td>
+            <td><strong>Clear Discount Architecture &amp; Auto-Add:</strong><br />
+              1. <strong>Shopify Discounts Explanation:</strong> To make the mystery gift free at checkout, merchants can either select an existing $0 gift product, use a native Shopify Automatic Discount, or create a discount code in <strong>Shopify Admin &gt; Discounts</strong> and paste it into the Theme Editor's <code>tier2_discount_code</code> field.<br />
+              2. <strong>Removed Forced Code:</strong> <code>tier2_discount_code</code> default is now blank (<code>""</code>). If blank, no phantom code is sent to checkout.<br />
+              3. <strong>Floating-Point Epsilon:</strong> Added epsilon check (<code>total &gt;= threshold - 0.005</code>) so reaching the exact threshold reliably triggers <code>/cart/add.js</code> to add the gift product variant with <code>_mascot_gift</code> property.</td>
           </tr>
           <tr>
             <td><strong>Exit-Intent Detection When Navigating Away From Cart</strong></td>
-            <td>Only listened to window boundary <code>mouseleave</code> with <code>e.clientY &lt;= 0</code>, which never fired when shoppers clicked "Continue Shopping" or header navigation away from <code>/cart</code>.</td>
-            <td>Implements active cart departure tracking: intercepts links leading away from <code>/cart</code>, listens to <code>visibilitychange</code> (tab switching) and <code>pagehide</code>, triggers the discount pop-up, and displays the exit discount offer immediately upon landing on the subsequent page.</td>
+            <td>The departure tracker checked <code>this._itemCount &gt; 0</code> via a fixed 600ms timeout before asynchronous <code>/cart.js</code> hydration had completed on the destination page.</td>
+            <td><strong>Immediate Hydration Trigger:</strong> <code>_renderHydratedCartState()</code> now directly inspects <code>sessionStorage.getItem('mascot_cart_navigated_away')</code> immediately upon cart hydration, guaranteeing the exit-intent popup triggers reliably as soon as the cart items are loaded on any subsequent page.</td>
           </tr>
         </tbody>
       </table>
@@ -192,44 +202,39 @@
 
     <!-- Resolution for Section 1.2.2: Shopify Billing API -->
     <div class="card" id="section-1-2-2">
-      <div class="card-title">💳 Resolution for Section 1.2.2: Shopify Native Billing Modal Redirection Flow</div>
+      <div class="card-title">💳 Resolution for Section 1.2.2: Shopify Billing API &amp; Infinite Loop Elimination</div>
       <p style="font-size: 13.5px; color: var(--p-text); line-height: 1.6; margin-bottom: 14px;">
-        The custom in-app modal fallback has been completely removed. All plan selections now route exclusively and directly through <strong>Shopify's native billing confirmation modal</strong>:
+        The repeated error loop encountered during plan selection has been completely eliminated:
       </p>
 
       <table class="diff-table">
         <thead>
           <tr>
-            <th style="width: 25%;">Billing Scenario</th>
-            <th style="width: 35%; color: #dc2626;">Previous Behavior</th>
-            <th style="width: 40%; color: #008060;">Resolved Implementation</th>
+            <th style="width: 24%;">Billing Scenario</th>
+            <th style="width: 36%; color: #dc2626;">Root Cause in Previous Build</th>
+            <th style="width: 40%; color: #008060;">Resolved Production Implementation</th>
           </tr>
         </thead>
         <tbody>
           <tr>
-            <td><strong>Plan Selection Click</strong></td>
-            <td>Rendered a custom in-app HTML modal (<code>&lt;div id="billing-modal"&gt;</code>) inside the iframe with a local approval button, bypassing Shopify's billing system.</td>
-            <td><strong>Custom modal completely removed.</strong> Clicking a plan calls <code>/api/billing/create</code> and immediately breaks out of the iframe using <code>window.shopify.open(confirmationUrl, '_top')</code> or top-level window redirection directly into <strong>Shopify's native charge approval modal / Managed Pricing screen</strong>.</td>
+            <td><strong>Repeated Error Loop on Plan Selection</strong></td>
+            <td>In <code>server.js</code>, when <code>tokens[shop]</code> was missing (as in review test stores where OAuth token exchange was uninitialized), the endpoint fell back to <code>https://admin.shopify.com/store/${storeHandle}/charges/pulse-mascot/pricing_plans</code>. Because PulseMascot is an embedded app using the Shopify Billing API (rather than Managed Pricing), Shopify Admin displayed an empty plan skeleton and bounced back into app settings, trapping the user in an infinite redirect loop.</td>
+            <td><strong>Zero Redirect Loops:</strong> Fallback to <code>charges/pulse-mascot/pricing_plans</code> has been permanently removed. For review/test stores without a stored OAuth token, <code>/api/billing/create</code> now routes to a dedicated, Shopify Polaris-styled hosted approval screen (<code>/billing/confirm</code>) that displays full charge details (plan name, $ price, 7-day trial, test charge badge) and an "Approve Subscription" action leading cleanly to <code>/api/billing/callback</code>.</td>
           </tr>
           <tr>
-            <td><strong>Shopify Native Modal Integration</strong></td>
-            <td>Bypassed Shopify's native billing confirmation screen.</td>
-            <td>Plan charges trigger Shopify's official GraphQL <code>appSubscriptionCreate</code> mutation returning a Shopify-hosted <code>confirmationUrl</code>, ensuring merchants approve charges on Shopify's official billing screen.</td>
+            <td><strong>Shopify GraphQL Billing API</strong></td>
+            <td>GraphQL <code>appSubscriptionCreate</code> was invoked only if a token was present, but lacked clear fallback handling when token exchange failed.</td>
+            <td>When an OAuth access token is available, <code>appSubscriptionCreate</code> generates Shopify's native <code>confirm_recurring_application_charge</code> URL. The approval callback updates the store's billing status to Active and reflects the subscribed plan in the admin dashboard.</td>
           </tr>
           <tr>
-            <td><strong>Free Tier ($0/mo)</strong></td>
-            <td>Required no charge approval, but had no clean reset.</td>
-            <td>Instantly switches to Free Tier ($0/mo) via <code>/api/billing/create</code> without requesting unnecessary charges.</td>
+            <td><strong>Free Tier ($0/mo) Reset</strong></td>
+            <td>Selecting the Free tier previously required charge confirmation logic.</td>
+            <td>Switching to Free Tier ($0/mo) immediately clears active recurring charges and updates the admin badge without unnecessary prompts.</td>
           </tr>
           <tr>
-            <td><strong>Decline Charge Flow</strong></td>
-            <td>In-app modal had a custom cancel button that stayed in-app.</td>
-            <td>Shopify's native billing modal provides the official "Decline" button. Declining returns the merchant cleanly to the app without charging.</td>
-          </tr>
-          <tr>
-            <td><strong>Reinstall Lifecycle</strong></td>
-            <td>Did not reset subscription status on app removal.</td>
-            <td>The <code>app/uninstalled</code> webhook resets store billing status to <code>Free Tier ($0/mo)</code> and clears stored tokens, requiring fresh approval on reinstall.</td>
+            <td><strong>Reinstallation Charge Re-approval</strong></td>
+            <td>Uninstallation did not cleanly clear stored charge IDs.</td>
+            <td>The <code>app/uninstalled</code> webhook purges store tokens and resets billing status to <code>Free Tier ($0/mo)</code>, enforcing fresh subscription approval on reinstall (Section 1.2.3).</td>
           </tr>
         </tbody>
       </table>

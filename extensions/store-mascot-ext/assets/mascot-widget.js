@@ -264,9 +264,9 @@
           const status = this._calculateTierStatus();
           if (status.hasAnyTier) {
             const tiers = [];
-            if (this.tier1Threshold > 0) tiers.push(`${this.tier1Reward} ($${this.tier1Threshold})`);
-            if (this.tier2Threshold > 0) tiers.push(`${this.tier2Reward} ($${this.tier2Threshold})`);
-            if (this.tier3Threshold > 0) tiers.push(`${this.tier3Reward} ($${this.tier3Threshold})`);
+            if (this.tier1Threshold > 0 && this.tier1Reward) tiers.push(`${this.tier1Reward} ($${this.tier1Threshold})`);
+            if (this.tier2Threshold > 0 && this.tier2Reward) tiers.push(`${this.tier2Reward} ($${this.tier2Threshold})`);
+            if (this.tier3Threshold > 0 && this.tier3Reward) tiers.push(`${this.tier3Reward} ($${this.tier3Threshold})`);
             this.nudge(`Welcome! ⚡ Active Goals: ${tiers.join(', ')}!`, {
               badge: 'Theme Editor Preview',
               duration: 0,
@@ -327,7 +327,6 @@
       }
     }
     get tier1Threshold() {
-      if (!this.hasAttribute('tier1-threshold') && !this.hasAttribute('free-shipping-threshold')) return 50;
       const raw = this.getAttribute('tier1-threshold') ?? this.getAttribute('free-shipping-threshold') ?? '';
       const s = String(raw).trim();
       if (s === '' || s === '0' || s === 'none' || s === 'disabled') return 0;
@@ -335,44 +334,42 @@
       return Number.isFinite(v) && v > 0 ? v : 0;
     }
     get freeShippingThreshold() { return this.tier1Threshold; }
-    get tier1Reward() { return this.getAttribute('tier1-reward') || 'Free Shipping'; }
+    get tier1Reward() { return this.getAttribute('tier1-reward') || ''; }
     get tier1DiscountCode() {
       const c = this.getAttribute('tier1-discount-code');
-      if (c === null) return 'FREESHIP';
+      if (c === null) return '';
       const s = String(c).trim();
       if (s === '' || s === '0' || s.toLowerCase() === 'none' || s.toLowerCase() === 'disabled') return '';
       return s;
     }
     get tier2Threshold() {
-      if (!this.hasAttribute('tier2-threshold')) return 80;
       const raw = this.getAttribute('tier2-threshold') ?? '';
       const s = String(raw).trim();
       if (s === '' || s === '0' || s === 'none' || s === 'disabled') return 0;
       const v = parseFloat(s);
       return Number.isFinite(v) && v > 0 ? v : 0;
     }
-    get tier2Reward() { return this.getAttribute('tier2-reward') || 'Mystery Gift 🎁'; }
+    get tier2Reward() { return this.getAttribute('tier2-reward') || ''; }
     get tier2GiftVariantId() { return (this.getAttribute('tier2-gift-variant-id') || '').trim(); }
-    get tier2GiftTitle() { return this.getAttribute('tier2-gift-title') || 'Mystery Gift 🎁'; }
+    get tier2GiftTitle() { return this.getAttribute('tier2-gift-title') || ''; }
     get tier2DiscountCode() {
       const c = this.getAttribute('tier2-discount-code');
-      if (c === null) return 'FREEGIFT';
+      if (c === null) return '';
       const s = String(c).trim();
       if (s === '' || s === '0' || s.toLowerCase() === 'none' || s.toLowerCase() === 'disabled') return '';
       return s;
     }
     get tier3Threshold() {
-      if (!this.hasAttribute('tier3-threshold')) return 120;
       const raw = this.getAttribute('tier3-threshold') ?? '';
       const s = String(raw).trim();
       if (s === '' || s === '0' || s === 'none' || s === 'disabled') return 0;
       const v = parseFloat(s);
       return Number.isFinite(v) && v > 0 ? v : 0;
     }
-    get tier3Reward() { return this.getAttribute('tier3-reward') || 'VIP 15% OFF 👑'; }
+    get tier3Reward() { return this.getAttribute('tier3-reward') || ''; }
     get tier3DiscountCode() {
       const c = this.getAttribute('tier3-discount-code');
-      if (c === null) return 'VIP15';
+      if (c === null) return '';
       const s = String(c).trim();
       if (s === '' || s === '0' || s.toLowerCase() === 'none' || s.toLowerCase() === 'disabled') return '';
       return s;
@@ -450,6 +447,7 @@
       }
     }
     async _loadStoreSettings() {
+      if (this.hasAttribute('data-shopify-block-id')) return;
       try {
         const shop = this.getAttribute('shop-domain') ||
           (typeof window !== 'undefined' && window.Shopify && window.Shopify.shop) || '';
@@ -481,35 +479,53 @@
       }
     }
     _applyServerSettings(s) {
-      if (!s || typeof s !== 'object') return;
-      if (typeof s.tier1Threshold !== 'undefined') this.setAttribute('tier1-threshold', s.tier1Threshold);
-      if (typeof s.tier1Reward !== 'undefined') this.setAttribute('tier1-reward', s.tier1Reward);
-      if (typeof s.tier1DiscountCode !== 'undefined') this.setAttribute('tier1-discount-code', s.tier1DiscountCode);
-      if (typeof s.tier2Threshold !== 'undefined') this.setAttribute('tier2-threshold', s.tier2Threshold);
-      if (typeof s.tier2Reward !== 'undefined') this.setAttribute('tier2-reward', s.tier2Reward);
-      if (typeof s.tier2DiscountCode !== 'undefined') this.setAttribute('tier2-discount-code', s.tier2DiscountCode);
-      if (typeof s.tier3Threshold !== 'undefined') this.setAttribute('tier3-threshold', s.tier3Threshold);
-      if (typeof s.tier3Reward !== 'undefined') this.setAttribute('tier3-reward', s.tier3Reward);
-      if (typeof s.tier3DiscountCode !== 'undefined') this.setAttribute('tier3-discount-code', s.tier3DiscountCode);
-      if (typeof s.exitDiscountCode !== 'undefined') this.setAttribute('exit-discount-code', s.exitDiscountCode);
-      if (typeof s.exitDiscountPercent !== 'undefined') this.setAttribute('exit-discount-percent', s.exitDiscountPercent);
-      if (typeof s.exitDiscountText !== 'undefined') this.setAttribute('exit-discount-text', s.exitDiscountText);
-      if (typeof s.persona !== 'undefined') this.setAttribute('persona', s.persona);
-      if (typeof s.enableSound !== 'undefined') this.setAttribute('enable-sound', String(s.enableSound));
-      if (typeof s.enableExitIntent !== 'undefined') this.setAttribute('enable-exit-intent', String(s.enableExitIntent));
+      if (!s || typeof s !== 'object' || this.hasAttribute('data-shopify-block-id')) return;
+      const setIfMissing = (attr, val) => {
+        if (!this.hasAttribute(attr) && typeof val !== 'undefined' && val !== null) {
+          this.setAttribute(attr, val);
+        }
+      };
+      setIfMissing('tier1-threshold', s.tier1Threshold);
+      setIfMissing('tier1-reward', s.tier1Reward);
+      setIfMissing('tier1-discount-code', s.tier1DiscountCode);
+      setIfMissing('tier2-threshold', s.tier2Threshold);
+      setIfMissing('tier2-reward', s.tier2Reward);
+      setIfMissing('tier2-discount-code', s.tier2DiscountCode);
+      setIfMissing('tier3-threshold', s.tier3Threshold);
+      setIfMissing('tier3-reward', s.tier3Reward);
+      setIfMissing('tier3-discount-code', s.tier3DiscountCode);
+      setIfMissing('exit-discount-code', s.exitDiscountCode);
+      setIfMissing('exit-discount-percent', s.exitDiscountPercent);
+      setIfMissing('exit-discount-text', s.exitDiscountText);
+      setIfMissing('persona', s.persona);
+      setIfMissing('enable-sound', String(s.enableSound));
+      setIfMissing('enable-exit-intent', String(s.enableExitIntent));
       this._syncAttributes();
       if (this._itemCount > 0) {
         this._renderHydratedCartState(false);
       }
     }
     _renderHydratedCartState(allowConfetti = false, items = null) {
+      try {
+        const navigatedAway = sessionStorage.getItem('mascot_cart_navigated_away');
+        if (navigatedAway === 'true' && this._itemCount > 0 && this.enableExitIntent && this.exitDiscountCode) {
+          sessionStorage.removeItem('mascot_cart_navigated_away');
+          setTimeout(() => {
+            this._triggerExitIntentOffer(true);
+          }, 350);
+          return;
+        }
+      } catch (_) {}
       const status = this._calculateTierStatus(items);
       if (status.activeDiscountCode) {
         this._syncCheckoutDiscounts(status.activeDiscountCode);
       }
       this._syncGift(status.shouldHaveGift, items);
       if (!status.hasAnyTier) {
-        if (this._meterEl) this._meterEl.classList.add('hidden');
+        if (this._meterEl) {
+          this._meterEl.classList.add('hidden');
+          this._meterEl.style.display = 'none';
+        }
         const countMsg = this._itemCount === 1 ? '1 item in your cart! Ready when you are ✨' : `${this._itemCount} items in your cart! Ready when you are ✨`;
         this.setState(STATES.IDLE, {
           message: countMsg,
@@ -569,9 +585,9 @@
       const t2 = this.tier2Threshold;
       const t3 = this.tier3Threshold;
       const activeTiers = [];
-      if (t1 > 0) activeTiers.push({ tier: 1, threshold: t1, reward: this.tier1Reward, code: this.tier1DiscountCode, isGift: false });
-      if (t2 > 0) activeTiers.push({ tier: 2, threshold: t2, reward: this.tier2Reward, code: this.tier2DiscountCode, isGift: true });
-      if (t3 > 0) activeTiers.push({ tier: 3, threshold: t3, reward: this.tier3Reward, code: this.tier3DiscountCode, isGift: false });
+      if (t1 > 0 && this.tier1Reward) activeTiers.push({ tier: 1, threshold: t1, reward: this.tier1Reward, code: this.tier1DiscountCode, isGift: false });
+      if (t2 > 0 && this.tier2Reward) activeTiers.push({ tier: 2, threshold: t2, reward: this.tier2Reward, code: this.tier2DiscountCode, isGift: true });
+      if (t3 > 0 && this.tier3Reward) activeTiers.push({ tier: 3, threshold: t3, reward: this.tier3Reward, code: this.tier3DiscountCode, isGift: false });
       activeTiers.sort((a, b) => a.threshold - b.threshold);
       if (activeTiers.length === 0) {
         return {
@@ -586,8 +602,8 @@
           shouldHaveGift: false
         };
       }
-      const achieved = activeTiers.filter(t => total >= t.threshold);
-      const next = activeTiers.find(t => total < t.threshold);
+      const achieved = activeTiers.filter(t => total >= t.threshold - 0.005);
+      const next = activeTiers.find(t => total < t.threshold - 0.005);
       if (!next) {
         const top = activeTiers[activeTiers.length - 1];
         return {
@@ -796,10 +812,11 @@
       if (!this._matchesBlockEvent(e)) return;
       this.setAttribute('data-editor-selected', 'true');
       this._syncAttributes();
+      const status = this._calculateTierStatus();
       this.nudge(this._getShippingMessage(), {
         badge: 'Theme Editor Preview',
         duration: 0,
-        showMeter: true,
+        showMeter: status.hasAnyTier,
       });
     }
     _handleBlockDeselect(e) {
@@ -895,39 +912,42 @@
         const status = this._calculateTierStatus();
         if (status.hasAnyTier) {
           this._meterEl.classList.remove('hidden');
+          this._meterEl.style.display = 'block';
           this._meterFillEl.style.width = `${status.progressPct.toFixed(1)}%`;
           if (this._tier1Tag) {
-            if (this.tier1Threshold > 0) {
+            if (this.tier1Threshold > 0 && this.tier1Reward) {
               this._tier1Tag.style.display = 'inline';
               this._tier1Tag.textContent = this.tier1Reward;
-              this._tier1Tag.classList.toggle('reached', this._cartTotalDollars >= this.tier1Threshold);
+              this._tier1Tag.classList.toggle('reached', this._cartTotalDollars >= this.tier1Threshold - 0.005);
             } else {
               this._tier1Tag.style.display = 'none';
             }
           }
           if (this._tier2Tag) {
-            if (this.tier2Threshold > 0) {
+            if (this.tier2Threshold > 0 && this.tier2Reward) {
               this._tier2Tag.style.display = 'inline';
               this._tier2Tag.textContent = this.tier2Reward;
-              this._tier2Tag.classList.toggle('reached', this._cartTotalDollars >= this.tier2Threshold);
+              this._tier2Tag.classList.toggle('reached', this._cartTotalDollars >= this.tier2Threshold - 0.005);
             } else {
               this._tier2Tag.style.display = 'none';
             }
           }
           if (this._tier3Tag) {
-            if (this.tier3Threshold > 0) {
+            if (this.tier3Threshold > 0 && this.tier3Reward) {
               this._tier3Tag.style.display = 'inline';
               this._tier3Tag.textContent = this.tier3Reward;
-              this._tier3Tag.classList.toggle('reached', this._cartTotalDollars >= this.tier3Threshold);
+              this._tier3Tag.classList.toggle('reached', this._cartTotalDollars >= this.tier3Threshold - 0.005);
             } else {
               this._tier3Tag.style.display = 'none';
             }
           }
         } else {
           this._meterEl.classList.add('hidden');
+          this._meterEl.style.display = 'none';
         }
       } else {
         this._meterEl.classList.add('hidden');
+        this._meterEl.style.display = 'none';
       }
       if (opts.isExitOffer) {
         this._exitCtaContainer.classList.add('visible');
@@ -962,6 +982,10 @@
         this._syncCheckoutDiscounts(status.activeDiscountCode);
       }
       this._syncGift(status.shouldHaveGift, items);
+      const isRemoval =
+        actionType === 'clear' ||
+        this._cartTotalDollars < prevTotal - 0.005 ||
+        (actionType === 'change' && (this._itemCount < prevCount || this._cartTotalDollars <= prevTotal));
       if (!status.hasAnyTier) {
         if (isRemoval) {
           this.sad(`Item removed from cart.`, { badge: 'Cart Updated', showMeter: false });
@@ -972,10 +996,6 @@
         }
         return;
       }
-      const isRemoval =
-        actionType === 'clear' ||
-        this._cartTotalDollars < prevTotal - 0.005 ||
-        (actionType === 'change' && (this._itemCount < prevCount || this._cartTotalDollars <= prevTotal));
       if (isRemoval) {
         const msg = status.isAllUnlocked
           ? `All VIP Rewards Unlocked! 👑 ${status.lastUnlockedReward} applied!`

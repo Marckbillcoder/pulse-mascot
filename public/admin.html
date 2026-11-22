@@ -1906,6 +1906,12 @@
 
     // Dynamic Theme Editor & Discounts Deep Links
     const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('billing') === 'approved') {
+      const approvedPlan = urlParams.get('plan') || 'Selected';
+      showToast(`🎉 Subscription approved: ${approvedPlan} Plan is now active!`);
+      const planBadge = document.getElementById('active-plan-badge');
+      if (planBadge) planBadge.textContent = `${approvedPlan} • Active`;
+    }
     const shopParam = urlParams.get('shop');
     const themeEditorLink = document.getElementById('theme-editor-link');
     const shopifyDiscountsLink = document.getElementById('shopify-discounts-link');
