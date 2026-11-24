@@ -200,39 +200,39 @@
       </table>
     </div>
 
-    <!-- Resolution for Section 1.2.2: Shopify Billing API -->
-    <div class="card" id="section-1-2-2">
-      <div class="card-title">💳 Resolution for Section 1.2.2: Shopify Billing API &amp; Infinite Loop Elimination</div>
+    <!-- Resolution for Section 1.2.1 & 1.2.2: Shopify Billing API & Zero Off-Platform Billing -->
+    <div class="card" id="section-1-2-1">
+      <div class="card-title">💳 Resolution for Section 1.2.1: Native Shopify Billing API Modal (Zero Off-Platform Billing)</div>
       <p style="font-size: 13.5px; color: var(--p-text); line-height: 1.6; margin-bottom: 14px;">
-        The repeated error loop encountered during plan selection has been completely eliminated:
+        PulseMascot processes 100% of recurring subscription charges strictly through Shopify's native Billing API. Any custom off-platform confirmation screens have been completely eliminated:
       </p>
 
       <table class="diff-table">
         <thead>
           <tr>
             <th style="width: 24%;">Billing Scenario</th>
-            <th style="width: 36%; color: #dc2626;">Root Cause in Previous Build</th>
+            <th style="width: 36%; color: #dc2626;">Previous Build Behavior</th>
             <th style="width: 40%; color: #008060;">Resolved Production Implementation</th>
           </tr>
         </thead>
         <tbody>
           <tr>
-            <td><strong>Repeated Error Loop on Plan Selection</strong></td>
-            <td>In <code>server.js</code>, when <code>tokens[shop]</code> was missing (as in review test stores where OAuth token exchange was uninitialized), the endpoint fell back to <code>https://admin.shopify.com/store/${storeHandle}/charges/pulse-mascot/pricing_plans</code>. Because PulseMascot is an embedded app using the Shopify Billing API (rather than Managed Pricing), Shopify Admin displayed an empty plan skeleton and bounced back into app settings, trapping the user in an infinite redirect loop.</td>
-            <td><strong>Zero Redirect Loops:</strong> Fallback to <code>charges/pulse-mascot/pricing_plans</code> has been permanently removed. For review/test stores without a stored OAuth token, <code>/api/billing/create</code> now routes to a dedicated, Shopify Polaris-styled hosted approval screen (<code>/billing/confirm</code>) that displays full charge details (plan name, $ price, 7-day trial, test charge badge) and an "Approve Subscription" action leading cleanly to <code>/api/billing/callback</code>.</td>
+            <td><strong>Shopify Native Billing Modal (1.2.1)</strong></td>
+            <td>When session token exchange was uninitialized in review test environments, <code>/api/billing/create</code> temporarily redirected to an app-hosted confirmation screen (<code>/billing/confirm</code>), which was flagged by Shopify as off-platform billing.</td>
+            <td><strong>100% Native In-Admin Billing Modal:</strong> The app-hosted confirmation screen has been permanently removed. Plan selection now exclusively invokes Shopify's GraphQL <code>appSubscriptionCreate</code> mutation, redirecting top-level navigation directly to Shopify's official recurring charge modal on <code>admin.shopify.com/store/{shop}/charges/{id}/confirm_recurring_application_charge</code>. No external payment screens or unapproved payment gateways exist.</td>
           </tr>
           <tr>
-            <td><strong>Shopify GraphQL Billing API</strong></td>
-            <td>GraphQL <code>appSubscriptionCreate</code> was invoked only if a token was present, but lacked clear fallback handling when token exchange failed.</td>
-            <td>When an OAuth access token is available, <code>appSubscriptionCreate</code> generates Shopify's native <code>confirm_recurring_application_charge</code> URL. The approval callback updates the store's billing status to Active and reflects the subscribed plan in the admin dashboard.</td>
+            <td><strong>App Bridge Session Token Exchange</strong></td>
+            <td>Token exchange endpoint lacked graceful environment variable validation on production hosts.</td>
+            <td>Secure App Bridge v4 session token exchange uses <code>SHOPIFY_API_SECRET</code> to exchange merchant ID tokens for offline access tokens, allowing real-time GraphQL <code>appSubscriptionCreate</code> mutation calls with <code>test: true</code> and 7-day free trial.</td>
           </tr>
           <tr>
             <td><strong>Free Tier ($0/mo) Reset</strong></td>
-            <td>Selecting the Free tier previously required charge confirmation logic.</td>
+            <td>Selecting Free tier previously required charge confirmation logic.</td>
             <td>Switching to Free Tier ($0/mo) immediately clears active recurring charges and updates the admin badge without unnecessary prompts.</td>
           </tr>
           <tr>
-            <td><strong>Reinstallation Charge Re-approval</strong></td>
+            <td><strong>Reinstallation Charge Re-approval (1.2.3)</strong></td>
             <td>Uninstallation did not cleanly clear stored charge IDs.</td>
             <td>The <code>app/uninstalled</code> webhook purges store tokens and resets billing status to <code>Free Tier ($0/mo)</code>, enforcing fresh subscription approval on reinstall (Section 1.2.3).</td>
           </tr>

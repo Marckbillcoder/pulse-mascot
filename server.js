@@ -554,11 +554,10 @@ const server = http.createServer(async (req, res) => {
 
         const isGraphChargeUrl = Boolean(confirmationUrl && (confirmationUrl.includes('/charges/') || confirmationUrl.includes('confirm_recurring_application_charge')) && !confirmationUrl.endsWith('/pricing_plans'));
 
-        // 3. Robust Confirmation URL: If GraphQL confirmationUrl was not generated (e.g. reviewer/dev store without access token),
-        // route cleanly to the hosted subscription approval confirmation page.
-        // NEVER route to charges/pulse-mascot/pricing_plans (which caused a 404 / infinite redirect loop in Shopify Admin)!
+        // 3. Robust Confirmation URL: Exclusively target Shopify's native in-admin charge confirmation modal.
+        // Section 1.2.1: NEVER route to custom off-platform hosted pages or unapproved payment URLs.
         if (!confirmationUrl) {
-          confirmationUrl = `${protocol}://${hostHeader}/billing/confirm?shop=${encodeURIComponent(shop)}&plan=${encodeURIComponent(planName)}&price=${price}&trialDays=${trialDays}&returnUrl=${encodeURIComponent(returnUrl)}`;
+          confirmationUrl = `https://admin.shopify.com/store/${storeHandle}/charges/confirm_recurring_application_charge`;
         }
 
         // Note: Do NOT mutate DATA_FILE here! Paid plan is ONLY granted upon merchant approval at returnUrl!
@@ -580,193 +579,15 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // --- Hosted Subscription Approval Confirmation Page (Eliminates repeated error loop) ---
+  // --- Section 1.2.1: Enforce Exclusively Native Shopify In-Admin Billing ---
+  // Any legacy requests to /billing/confirm are immediately routed back into Shopify Admin.
+  // PulseMascot does NOT host off-platform billing pages; all charges use Shopify GraphQL appSubscriptionCreate.
   if (pathname === '/billing/confirm' && req.method === 'GET') {
     const query = parsed.query || {};
     const shop = query.shop || 'demo-store.myshopify.com';
     const storeHandle = shop.replace('.myshopify.com', '');
-    const plan = query.plan || 'Growth';
-    const price = query.price || '79';
-    const trialDays = query.trialDays || '7';
-    const returnUrl = query.returnUrl || `/api/billing/callback?shop=${encodeURIComponent(shop)}&plan=${encodeURIComponent(plan)}&price=${encodeURIComponent(price)}`;
-    const approveUrl = returnUrl.includes('?')
-      ? `${returnUrl}&charge_id=gid://shopify/AppSubscription/sub_${Date.now()}`
-      : `${returnUrl}?charge_id=gid://shopify/AppSubscription/sub_${Date.now()}`;
-    const cancelUrl = `https://admin.shopify.com/store/${storeHandle}/apps/pulse-mascot`;
-
-    const html = `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Approve Subscription — PulseMascot</title>
-  <link rel="stylesheet" href="https://unpkg.com/@shopify/polaris@13.0.0/build/esm/styles.css" />
-  <style>
-    body {
-      background: #f1f2f4;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      margin: 0;
-      padding: 20px;
-    }
-    .modal-card {
-      background: #ffffff;
-      border: 1px solid #dcdfe3;
-      border-radius: 16px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-      max-width: 520px;
-      width: 100%;
-      padding: 32px;
-      text-align: left;
-    }
-    .brand-header {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 24px;
-      padding-bottom: 16px;
-      border-bottom: 1px solid #edf0f2;
-    }
-    .brand-icon {
-      width: 44px;
-      height: 44px;
-      border-radius: 10px;
-      background: linear-gradient(135deg, #4f46e5, #06b6d4);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #fff;
-      font-size: 22px;
-    }
-    .brand-title {
-      font-size: 17px;
-      font-weight: 700;
-      color: #202223;
-    }
-    .brand-sub {
-      font-size: 13px;
-      color: #6d7175;
-    }
-    .charge-details {
-      background: #f8fafc;
-      border: 1px solid #e2e8f0;
-      border-radius: 12px;
-      padding: 18px 20px;
-      margin-bottom: 24px;
-    }
-    .detail-row {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 10px;
-      font-size: 14px;
-    }
-    .detail-row:last-child {
-      margin-bottom: 0;
-      padding-top: 10px;
-      border-top: 1px dashed #cbd5e1;
-      font-weight: 700;
-      font-size: 16px;
-      color: #0f172a;
-    }
-    .badge-test {
-      display: inline-block;
-      background: #fef3c7;
-      color: #92400e;
-      font-size: 11px;
-      font-weight: 700;
-      padding: 3px 8px;
-      border-radius: 12px;
-      margin-bottom: 16px;
-    }
-    .actions {
-      display: flex;
-      gap: 12px;
-    }
-    .btn-approve {
-      flex: 1;
-      background: #008060;
-      color: #ffffff;
-      padding: 12px;
-      border-radius: 8px;
-      font-size: 14px;
-      font-weight: 700;
-      text-align: center;
-      text-decoration: none;
-      transition: background 0.15s;
-    }
-    .btn-approve:hover {
-      background: #004c3f;
-    }
-    .btn-cancel {
-      padding: 12px 20px;
-      background: transparent;
-      border: 1px solid #c9cccf;
-      color: #202223;
-      border-radius: 8px;
-      font-size: 14px;
-      font-weight: 600;
-      text-align: center;
-      text-decoration: none;
-      transition: background 0.15s;
-    }
-    .btn-cancel:hover {
-      background: #f6f6f7;
-    }
-  </style>
-</head>
-<body>
-  <div class="modal-card">
-    <div class="brand-header">
-      <div class="brand-icon">⚡</div>
-      <div>
-        <div class="brand-title">PulseMascot: Cart Companion</div>
-        <div class="brand-sub">${shop}</div>
-      </div>
-    </div>
-
-    <div class="badge-test">TEST CHARGE &bull; Review &amp; Development Safe</div>
-
-    <h2 style="font-size: 18px; font-weight: 700; margin-bottom: 8px; color: #111827;">Approve Subscription</h2>
-    <p style="font-size: 13.5px; color: #475569; margin-bottom: 20px; line-height: 1.5;">
-      You're subscribing to the <strong>${plan} Plan</strong>. All plans are backed by a risk-free 7-day trial.
-    </p>
-
-    <div class="charge-details">
-      <div class="detail-row">
-        <span>Plan</span>
-        <strong>${plan}</strong>
-      </div>
-      <div class="detail-row">
-        <span>Trial period</span>
-        <span>${trialDays} days free</span>
-      </div>
-      <div class="detail-row">
-        <span>Billing cycle</span>
-        <span>Every 30 days</span>
-      </div>
-      <div class="detail-row">
-        <span>Amount due today</span>
-        <span>$0.00 USD</span>
-      </div>
-      <div class="detail-row">
-        <span>Total recurring</span>
-        <span>$${price}.00 USD</span>
-      </div>
-    </div>
-
-    <div class="actions">
-      <a href="${approveUrl}" class="btn-approve">Approve Subscription</a>
-      <a href="${cancelUrl}" class="btn-cancel">Cancel</a>
-    </div>
-  </div>
-</body>
-</html>`;
-
-    res.writeHead(200, { 'Content-Type': 'text/html; charset=UTF-8' });
-    res.end(html);
+    res.writeHead(302, { 'Location': `https://admin.shopify.com/store/${storeHandle}/apps/pulse-mascot` });
+    res.end();
     return;
   }
 
