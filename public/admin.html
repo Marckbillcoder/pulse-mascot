@@ -1773,6 +1773,8 @@
             } else {
               window.location.href = billData.confirmationUrl;
             }
+          } else {
+            showToast(billData.message || billData.error || 'Failed to initialize Shopify Billing charge');
           }
         } catch (err) {
           showToast('Failed to initialize Shopify Billing charge');

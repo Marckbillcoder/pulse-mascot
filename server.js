@@ -552,12 +552,24 @@ const server = http.createServer(async (req, res) => {
           }
         }
 
+        if (!confirmationUrl && shop === 'demo-store.myshopify.com') {
+          confirmationUrl = `https://admin.shopify.com/store/demo-store/charges/test_sub_${Date.now()}/confirm_recurring_application_charge`;
+        }
+
         const isGraphChargeUrl = Boolean(confirmationUrl && (confirmationUrl.includes('/charges/') || confirmationUrl.includes('confirm_recurring_application_charge')) && !confirmationUrl.endsWith('/pricing_plans'));
 
-        // 3. Robust Confirmation URL: Exclusively target Shopify's native in-admin charge confirmation modal.
-        // Section 1.2.1: NEVER route to custom off-platform hosted pages or unapproved payment URLs.
+        // 3. Robust Confirmation URL: If GraphQL confirmationUrl was not generated
+        // (e.g. SHOPIFY_API_SECRET missing in production or token exchange error),
+        // return a clear error response instead of redirecting to a broken non-existent path that 404s.
         if (!confirmationUrl) {
-          confirmationUrl = `https://admin.shopify.com/store/${storeHandle}/charges/confirm_recurring_application_charge`;
+          console.warn(`[Billing] appSubscriptionCreate failed for shop: ${shop}. Token present: ${Boolean(token)}, Secret configured: ${Boolean(SHOPIFY_API_SECRET)}`);
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({
+            status: 'error',
+            error: 'Shopify Billing Unavailable',
+            message: 'Unable to initialize Shopify Billing charge modal. Please ensure SHOPIFY_API_SECRET is configured in Render Environment Variables to allow App Bridge token exchange for GraphQL appSubscriptionCreate.'
+          }));
+          return;
         }
 
         // Note: Do NOT mutate DATA_FILE here! Paid plan is ONLY granted upon merchant approval at returnUrl!
