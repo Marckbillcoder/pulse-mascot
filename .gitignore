@@ -8,3 +8,7 @@ dist/
 data/tokens.json
 push_to_github.cmd
 deploy.cmd
+
+*.webm
+temp_*/
+

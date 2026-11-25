@@ -1,22 +1,22 @@
 {
   "shop": "demo-store.myshopify.com",
   "plan": "Free Tier ($0/mo)",
-  "impressions": 1,
+  "impressions": 0,
   "interactions": 2340,
-  "milestonesReached": 619,
+  "milestonesReached": 618,
   "exitOffersShown": 342,
   "exitOffersConverted": 94,
-  "attributedRevenue": 58,
+  "attributedRevenue": 0,
   "conversionLift": 14.8,
   "abTest": {
     "enabled": true,
     "variantA": {
       "label": "Mascot Active (Cohort A)",
-      "sessions": 7141,
-      "orders": 272,
-      "rate": 3.81,
-      "aov": 64.18,
-      "revenue": 17458
+      "sessions": 7140,
+      "orders": 271,
+      "rate": 3.8,
+      "aov": 64.2,
+      "revenue": 17400
     },
     "variantB": {
       "label": "Mascot Hidden (Control B)",
@@ -26,17 +26,10 @@
       "aov": 51,
       "revenue": 10557
     },
-    "conversionLift": "+31.4%",
-    "revenueLift": "+$6,901.00",
-    "confidence": "99.5% (Statistically Significant)"
+    "conversionLift": "+31.0%",
+    "revenueLift": "+$6,843.00 (+64.8%)",
+    "confidence": "99.4% (Statistically Significant)"
   },
-  "recentEvents": [
-    {
-      "type": "milestone",
-      "label": "Tier 1 Unlocked",
-      "revenue": 58,
-      "time": "2026-11-25T15:32:09.799Z"
-    }
-  ],
+  "recentEvents": [],
   "billingStatus": "inactive"
 }

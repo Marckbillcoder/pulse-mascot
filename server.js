@@ -1049,6 +1049,16 @@ const server = http.createServer(async (req, res) => {
     }
   }
 
+  // --- Serve Commercial Marketing & Advertising Hub ---
+  if (pathname === '/marketing' || pathname === '/growth' || pathname === '/ads' || pathname === '/marketing/' || pathname === '/growth/') {
+    const marketingPath = path.join(PUBLIC_DIR, 'marketing-hub.html');
+    if (fs.existsSync(marketingPath)) {
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=UTF-8' });
+      fs.createReadStream(marketingPath).pipe(res);
+      return;
+    }
+  }
+
   // --- Serve Embedded Admin App & Auth Endpoints (Shopify CSP Frame-Ancestors Compliant) ---
   if (
     pathname === '/' ||
