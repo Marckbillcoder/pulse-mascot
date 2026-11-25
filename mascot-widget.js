@@ -519,6 +519,8 @@
       const status = this._calculateTierStatus(items);
       if (status.activeDiscountCode) {
         this._syncCheckoutDiscounts(status.activeDiscountCode);
+      } else {
+        this._clearCheckoutDiscounts();
       }
       this._syncGift(status.shouldHaveGift, items);
       if (!status.hasAnyTier) {
@@ -667,6 +669,25 @@
             if (url.pathname.includes('/checkout')) {
               url.searchParams.set('discount', code);
               a.href = url.pathname + url.search + url.hash;
+            }
+          } catch (_) {}
+        });
+      } catch (_) {}
+    }
+    _clearCheckoutDiscounts() {
+      this._activeDiscountCode = '';
+      try {
+        const inputs = document.querySelectorAll('input.mascot-discount-field');
+        inputs.forEach((input) => input.remove());
+      } catch (_) {}
+      try {
+        const links = document.querySelectorAll('a[href*="/checkout"]');
+        links.forEach((a) => {
+          try {
+            const url = new URL(a.href, window.location.origin);
+            if (url.searchParams.has('discount')) {
+              url.searchParams.delete('discount');
+              a.href = url.pathname + (url.search ? url.search : '') + url.hash;
             }
           } catch (_) {}
         });
@@ -980,6 +1001,8 @@
       const status = this._calculateTierStatus(items);
       if (status.activeDiscountCode) {
         this._syncCheckoutDiscounts(status.activeDiscountCode);
+      } else {
+        this._clearCheckoutDiscounts();
       }
       this._syncGift(status.shouldHaveGift, items);
       const isRemoval =
@@ -1432,16 +1455,10 @@
       this.style.setProperty('--mascot-offset-y', `${this.offsetY}px`);
       this.setAttribute('persona', this.persona);
       const p = this.persona;
-      const orb = this.shadowRoot && this.shadowRoot.querySelector('.persona-orb');
-      const pet = this.shadowRoot && this.shadowRoot.querySelector('.persona-pet');
-      const boba = this.shadowRoot && this.shadowRoot.querySelector('.persona-boba');
-      const ghost = this.shadowRoot && this.shadowRoot.querySelector('.persona-ghost');
-      const dragon = this.shadowRoot && this.shadowRoot.querySelector('.persona-dragon');
-      if (orb) orb.style.display = (p === 'orb') ? '' : 'none';
-      if (pet) pet.style.display = (p === 'pet') ? '' : 'none';
-      if (boba) boba.style.display = (p === 'boba') ? '' : 'none';
-      if (ghost) ghost.style.display = (p === 'ghost') ? '' : 'none';
-      if (dragon) dragon.style.display = (p === 'dragon') ? '' : 'none';
+      ['orb','pet','boba','ghost','dragon'].forEach(k => {
+        const el = this.shadowRoot && this.shadowRoot.querySelector(`.persona-${k}`);
+        if (el) el.style.display = (p === k) ? '' : 'none';
+      });
       if (!this._brandingEl || !this._brandNameEl) return;
       this._brandNameEl.textContent = this.appName;
       this._brandingEl.setAttribute('href', this.brandUrl);
@@ -1449,40 +1466,17 @@
     }
     _updateBodyGradient(state) {
       if (!this._orbBodyEl) return;
-      const map = {
-        IDLE: 'url(#orbGradIdle)',
-        CELEBRATE: 'url(#orbGradCelebrate)',
-        SAD: 'url(#orbGradSad)',
-        NUDGE: 'url(#orbGradNudge)',
-      };
+      const map = { IDLE: 'url(#orbGradIdle)', CELEBRATE: 'url(#orbGradCelebrate)', SAD: 'url(#orbGradSad)', NUDGE: 'url(#orbGradNudge)' };
       this._orbBodyEl.setAttribute('fill', map[state] || map.IDLE);
     }
     _defaultBadge(state) {
-      if (state === STATES.CELEBRATE) return 'Milestone Goal';
-      if (state === STATES.SAD) return 'Cart Update';
-      if (state === STATES.NUDGE) return 'Friendly Nudge';
-      return 'Store Companion';
+      return state === STATES.CELEBRATE ? 'Milestone Goal' : (state === STATES.SAD ? 'Cart Update' : (state === STATES.NUDGE ? 'Friendly Nudge' : 'Store Companion'));
     }
     _sendTelemetry(type, payload = {}) {
       try {
-        const body = JSON.stringify({
-          type,
-          cohort: this._cohort || 'variant_a',
-          shop: (typeof window !== 'undefined' && window.Shopify && window.Shopify.shop) || 'demo-store.myshopify.com',
-          timestamp: Date.now(),
-          ...payload,
-        });
-        const endpoints = ['/apps/pulse-mascot/telemetry', '/api/telemetry'];
-        if (typeof navigator !== 'undefined' && navigator.sendBeacon) {
-          navigator.sendBeacon(endpoints[0], body);
-        } else if (typeof window !== 'undefined' && window.fetch) {
-          window.fetch(endpoints[1], {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body,
-            keepalive: true,
-          }).catch(() => {});
-        }
+        const body = JSON.stringify({ type, cohort: this._cohort || 'variant_a', shop: (typeof window !== 'undefined' && window.Shopify && window.Shopify.shop) || 'demo-store.myshopify.com', timestamp: Date.now(), ...payload });
+        if (typeof navigator !== 'undefined' && navigator.sendBeacon) navigator.sendBeacon('/apps/pulse-mascot/telemetry', body);
+        else if (typeof window !== 'undefined' && window.fetch) window.fetch('/api/telemetry', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body, keepalive: true }).catch(() => {});
       } catch (_) {}
     }
   }
